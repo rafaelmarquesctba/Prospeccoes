@@ -476,10 +476,6 @@ function openClient(rowIndex) {
       <span style="font-size:18px">💬</span> Enviar WhatsApp para ${c.contato && !['NÃO HOUVE','NÃO HÁ'].includes(c.contato) ? c.contato : 'contato'}
     </button>` : ''}
 
-    <button onclick="openCalModal(${c.rowIndex})" style="background:var(--accent-light);color:var(--accent);border:1.5px solid var(--accent);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px">
-      <span style="font-size:18px">📅</span> Agendar visita
-    </button>
-
     <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:13px;display:flex;flex-direction:column;gap:6px">
       ${c.endereco ? `<div><b>Endereço:</b> ${c.endereco}, ${c.cidade}</div>` : `<div><b>Cidade:</b> ${c.cidade}</div>`}
       ${c.email ? `<div><b>E-mail:</b> ${c.email}</div>` : ''}
@@ -538,6 +534,9 @@ function openClient(rowIndex) {
       <textarea id="edit-obs" placeholder="Resultado da visita, próximos passos..."></textarea>
     </div>
 
+    <button onclick="openCalModal(${c.rowIndex})" style="background:var(--accent-light);color:var(--accent);border:1.5px solid var(--accent);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">📅</span> Agendar visita na Google Agenda
+    </button>
     <button class="btn-primary" onclick="salvarEdicao()">💾 Salvar alterações</button>
     <div style="height:8px"></div>
   `;
