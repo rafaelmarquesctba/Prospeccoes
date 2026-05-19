@@ -160,29 +160,6 @@
   <div class="list" id="clientList"></div>
 </div>
 
-<!-- SECTION: DASHBOARD -->
-<div id="secDash" style="display:none; padding:16px">
-  <div style="display:flex;flex-direction:column;gap:14px">
-    <div id="dash-metrics" style="display:grid;grid-template-columns:1fr 1fr;gap:10px"></div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Funil de status</div>
-      <div id="dash-funil"></div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Urgência de contato</div>
-      <div id="dash-urgencia"></div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Prospecções por origem</div>
-      <div id="dash-origem"></div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
-      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Novos clientes por mês</div>
-      <div id="dash-mensal"></div>
-    </div>
-  </div>
-</div>
-
 <!-- SECTION: NOVO -->
 <div id="secNovo" style="display:none; padding:16px">
   <div style="background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
@@ -231,9 +208,6 @@
   <button class="nav-btn active" id="navLista" onclick="showSection('lista')">
     <span class="nav-icon">📋</span>Lista
   </button>
-  <button class="nav-btn" id="navDash" onclick="showSection('dash')">
-    <span class="nav-icon">📊</span>Dashboard
-  </button>
   <button class="nav-btn" id="navNovo" onclick="showSection('novo')" style="position:relative">
     <span class="nav-icon">➕</span>Novo
     <div class="pending-badge" id="pendingBadge" style="display:none">0</div>
@@ -254,7 +228,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-const API = 'https://script.google.com/macros/s/AKfycbzygvb59gPJvPEw3IM8r72j0dkzgFWwSXC1lmQTpjS6NyKBz9eoj2nKmcjy9wZl-KFD/exec';
+const API = 'https://script.google.com/macros/s/AKfycby6OOxdn2I3mgSlywDZdc3TmthU-K5zkyRm8eHDW31QYWudBudVAlELQBv2_ifA8N_jkQ/exec';
 const CACHE_KEY = 'prospecoes_cache';
 const PENDING_KEY = 'prospecoes_pending';
 
@@ -417,12 +391,9 @@ function setTab(tab, el) {
 // --- SECTIONS ---
 function showSection(s) {
   document.getElementById('secLista').style.display = s === 'lista' ? '' : 'none';
-  document.getElementById('secDash').style.display = s === 'dash' ? '' : 'none';
   document.getElementById('secNovo').style.display = s === 'novo' ? '' : 'none';
   document.getElementById('navLista').classList.toggle('active', s === 'lista');
-  document.getElementById('navDash').classList.toggle('active', s === 'dash');
   document.getElementById('navNovo').classList.toggle('active', s === 'novo');
-  if (s === 'dash') renderDashboard();
 }
 
 // --- OPEN CLIENT DRAWER ---
@@ -595,133 +566,6 @@ async function salvarNovo() {
   } else {
     addPending(payload);
   }
-}
-
-
-// --- DASHBOARD ---
-function renderDashboard() {
-  if (!allClients.length) return;
-  const ativos = allClients.filter(c => c.status && c.status !== 'DECLINOU');
-
-  // --- Métricas rápidas ---
-  const total = allClients.length;
-  const vendas = allClients.filter(c => c.status === 'VENDA REALIZADA').length;
-  const urgentes = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 90; }).length;
-  const cotacoes = allClients.filter(c => c.status === 'COTAÇÃO').length;
-  const txConversao = total > 0 ? Math.round((vendas / total) * 100) : 0;
-
-  document.getElementById('dash-metrics').innerHTML = `
-    <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center">
-      <div style="font-size:28px;font-weight:700;color:var(--accent)">${total}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Total prospectado</div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center">
-      <div style="font-size:28px;font-weight:700;color:var(--green)">${vendas}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Vendas realizadas</div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center">
-      <div style="font-size:28px;font-weight:700;color:var(--red)">${urgentes}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Contato urgente</div>
-    </div>
-    <div style="background:var(--surface);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);text-align:center">
-      <div style="font-size:28px;font-weight:700;color:var(--amber)">${cotacoes}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:2px">Em cotação</div>
-    </div>
-  `;
-
-  // --- Funil de status ---
-  const statusOrder = ['PROSPECÇÃO','CADASTRO','COTAÇÃO','VENDA REALIZADA','DECLINOU'];
-  const statusColors = {'PROSPECÇÃO':'#1A3FAA','CADASTRO':'#C97A00','COTAÇÃO':'#C97A00','VENDA REALIZADA':'#1E7B3E','DECLINOU':'#aaa'};
-  const statusCount = {};
-  statusOrder.forEach(s => statusCount[s] = 0);
-  allClients.forEach(c => { if (c.status && statusCount[c.status] !== undefined) statusCount[c.status]++; });
-  const maxStatus = Math.max(...Object.values(statusCount), 1);
-  document.getElementById('dash-funil').innerHTML = statusOrder.map(s => {
-    const count = statusCount[s];
-    const pct = Math.round((count / maxStatus) * 100);
-    return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span style="font-weight:500">${s}</span>
-        <span style="font-weight:700;color:${statusColors[s]}">${count}</span>
-      </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
-        <div style="width:${pct}%;height:100%;background:${statusColors[s]};border-radius:4px;transition:width .5s"></div>
-      </div>
-    </div>`;
-  }).join('');
-
-  // --- Urgência ---
-  const urg = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 90; }).length;
-  const atenc = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 30 && d < 90; }).length;
-  const emDia = ativos.filter(c => { const d = dias(c.ultimoContato); return d !== null && d < 30; }).length;
-  const semData = ativos.filter(c => !c.ultimoContato).length;
-  const urgData = [
-    { label: '🔴 Urgente (+90d)', count: urg, color: '#E24B4A', bg: '#FFD7D7' },
-    { label: '🟡 Atenção (30-90d)', count: atenc, color: '#C97A00', bg: '#FFF3CD' },
-    { label: '🟢 Em dia (-30d)', count: emDia, color: '#1E7B3E', bg: '#D4EDDA' },
-    { label: '⚪ Sem data', count: semData, color: '#888', bg: '#F1EFE8' },
-  ];
-  const maxUrg = Math.max(...urgData.map(u => u.count), 1);
-  document.getElementById('dash-urgencia').innerHTML = urgData.map(u => `
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span>${u.label}</span>
-        <span style="font-weight:700;color:${u.color}">${u.count}</span>
-      </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
-        <div style="width:${Math.round((u.count/maxUrg)*100)}%;height:100%;background:${u.color};border-radius:4px;transition:width .5s"></div>
-      </div>
-    </div>`).join('');
-
-  // --- Por origem ---
-  const origemMap = {};
-  allClients.forEach(c => {
-    const o = c.infoVia || 'Não informado';
-    origemMap[o] = (origemMap[o] || 0) + 1;
-  });
-  const origemSorted = Object.entries(origemMap).sort((a,b) => b[1]-a[1]);
-  const maxOri = Math.max(...origemSorted.map(o => o[1]), 1);
-  const oriColors = ['#1A3FAA','#1E7B3E','#C97A00','#8B4FAA','#D63030','#888','#3399CC'];
-  document.getElementById('dash-origem').innerHTML = origemSorted.map(([label, count], i) => `
-    <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span style="font-weight:500">${label}</span>
-        <span style="font-weight:700;color:${oriColors[i % oriColors.length]}">${count}</span>
-      </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
-        <div style="width:${Math.round((count/maxOri)*100)}%;height:100%;background:${oriColors[i % oriColors.length]};border-radius:4px;transition:width .5s"></div>
-      </div>
-    </div>`).join('');
-
-  // --- Evolução mensal ---
-  const mesMap = {};
-  allClients.forEach(c => {
-    if (!c.primeiroContato) return;
-    const parts = c.primeiroContato.split('/');
-    if (parts.length !== 3) return;
-    const key = parts[2] + '-' + parts[1];
-    mesMap[key] = (mesMap[key] || 0) + 1;
-  });
-  const mesSorted = Object.entries(mesMap).sort((a,b) => a[0].localeCompare(b[0])).slice(-12);
-  const maxMes = Math.max(...mesSorted.map(m => m[1]), 1);
-  const mesLabels = { '01':'Jan','02':'Fev','03':'Mar','04':'Abr','05':'Mai','06':'Jun','07':'Jul','08':'Ago','09':'Set','10':'Out','11':'Nov','12':'Dez' };
-  document.getElementById('dash-mensal').innerHTML = `
-    <div style="display:flex;align-items:flex-end;gap:6px;height:100px;padding-bottom:20px;position:relative">
-      ${mesSorted.map(([key, count]) => {
-        const [ano, mes] = key.split('-');
-        const pct = Math.round((count / maxMes) * 100);
-        return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%">
-          <div style="flex:1;display:flex;align-items:flex-end;width:100%">
-            <div style="width:100%;background:var(--accent);border-radius:4px 4px 0 0;height:${pct}%;min-height:4px;transition:height .5s" title="${count}"></div>
-          </div>
-          <div style="font-size:9px;color:var(--muted);text-align:center;line-height:1.2">${mesLabels[mes]}<br>${ano.slice(2)}</div>
-        </div>`;
-      }).join('')}
-    </div>
-    <div style="display:flex;gap:6px">
-      ${mesSorted.map(([key, count]) => `<div style="flex:1;text-align:center;font-size:10px;font-weight:600;color:var(--accent)">${count}</div>`).join('')}
-    </div>
-  `;
 }
 
 // --- PENDING QUEUE ---
