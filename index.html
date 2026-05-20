@@ -158,6 +158,17 @@
     <button class="tab" onclick="setTab('ativos',this)">Ativos</button>
     <button class="tab" onclick="setTab('vendas',this)">Vendas</button>
   </div>
+  <div style="padding:0 16px 8px;display:flex;gap:8px">
+    <select style="flex:1;font-size:13px;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text)" onchange="filterCategoria=this.value;renderList()">
+      <option value="">Todas as categorias</option>
+      <option value="CONSTRUTORA">CONSTRUTORA</option>
+      <option value="COOPERATIVA">COOPERATIVA</option>
+      <option value="CONDOMINIO">CONDOMÍNIO</option>
+      <option value="REPINTURA DE FACHADA">REPINTURA DE FACHADA</option>
+      <option value="INDUSTRIA">INDÚSTRIA</option>
+      <option value="OUTROS">OUTROS</option>
+    </select>
+  </div>
   <div class="list" id="clientList"></div>
 </div>
 
@@ -215,6 +226,7 @@
           <option value="COOPERATIVA">COOPERATIVA</option>
           <option value="CONDOMINIO">CONDOMÍNIO</option>
           <option value="REPINTURA DE FACHADA">REPINTURA DE FACHADA</option>
+          <option value="INDUSTRIA">INDÚSTRIA</option>
           <option value="OUTROS">OUTROS</option>
         </select>
       </div>
@@ -417,6 +429,7 @@ function statusBadge(s) {
 function renderList() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let list = allClients;
+  if (filterCategoria) list = list.filter(c => c.categoria === filterCategoria);
 
   if (q) list = list.filter(c =>
     c.cliente.toLowerCase().includes(q) ||
@@ -579,6 +592,7 @@ function openClient(rowIndex) {
         <option value="COOPERATIVA" ${c.categoria === 'COOPERATIVA' ? 'selected' : ''}>COOPERATIVA</option>
         <option value="CONDOMINIO" ${c.categoria === 'CONDOMINIO' ? 'selected' : ''}>CONDOMÍNIO</option>
         <option value="REPINTURA DE FACHADA" ${c.categoria === 'REPINTURA DE FACHADA' ? 'selected' : ''}>REPINTURA DE FACHADA</option>
+        <option value="INDUSTRIA" ${c.categoria === 'INDUSTRIA' ? 'selected' : ''}>INDÚSTRIA</option>
         <option value="OUTROS" ${c.categoria === 'OUTROS' ? 'selected' : ''}>OUTROS</option>
       </select>
     </div>
@@ -812,7 +826,7 @@ function renderDashboard() {
     </div>`).join('');
 
   // --- Por categoria ---
-  const validCats = ['CONSTRUTORA','COOPERATIVA','CONDOMINIO','REPINTURA DE FACHADA','OUTROS'];
+  const validCats = ['CONSTRUTORA','COOPERATIVA','CONDOMINIO','REPINTURA DE FACHADA','INDUSTRIA','OUTROS'];
   const catMap = {'Não informado': 0};
   validCats.forEach(c => catMap[c] = 0);
   allClients.forEach(c => {
