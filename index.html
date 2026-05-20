@@ -289,6 +289,24 @@
   </div>
 </div>
 
+<!-- LEMBRETE MODAL -->
+<div class="overlay" id="lemOverlay" onclick="closeLemModal()"></div>
+<div class="drawer" id="lemDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <span class="drawer-title">🔔 Criar lembrete</span>
+    <button class="close-btn" onclick="closeLemModal()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div id="lem-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:12px;font-size:13px;display:flex;flex-direction:column;gap:4px"></div>
+    <div class="field"><label>Data do lembrete *</label><input type="date" id="lem-data"></div>
+    <div class="field"><label>Horário *</label><input type="time" id="lem-hora" value="08:00"></div>
+    <div class="field"><label>Texto do lembrete *</label><input type="text" id="lem-texto" placeholder="Ex: Ligar para verificar cotação"></div>
+    <button class="btn-primary" onclick="criarLembrete()">🔔 Criar lembrete na agenda</button>
+    <div style="height:8px"></div>
+  </div>
+</div>
+
 <!-- OVERLAY + DRAWER -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -571,6 +589,9 @@ function openClient(rowIndex) {
 
     <button onclick="openCalModal(${c.rowIndex})" style="background:var(--accent-light);color:var(--accent);border:1.5px solid var(--accent);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
       <span style="font-size:18px">📅</span> Agendar visita na Google Agenda
+    </button>
+    <button onclick="openLemModal(${c.rowIndex})" style="background:#FFF8E6;color:#C97A00;border:1.5px solid #C97A00;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">🔔</span> Criar lembrete na agenda
     </button>
     <button class="btn-primary" onclick="salvarEdicao()">💾 Salvar alterações</button>
     <button onclick="excluirCliente(${c.rowIndex})" style="background:transparent;border:1.5px solid var(--red);color:var(--red);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px">🗑️ Excluir cliente</button>
@@ -947,6 +968,75 @@ async function excluirCliente(rowIndex) {
     try {
       await postData({ action: 'deleteRow', rowIndex });
     } catch(e) {}
+  }
+}
+
+
+// --- LEMBRETE RÁPIDO ---
+let lemClient = null;
+
+function openLemModal(rowIndex) {
+  lemClient = allClients.find(x => x.rowIndex === rowIndex);
+  if (!lemClient) return;
+
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  document.getElementById('lem-data').value = tomorrow.toISOString().split('T')[0];
+  document.getElementById('lem-hora').value = '08:00';
+  document.getElementById('lem-texto').value = '';
+
+  document.getElementById('lem-client-info').innerHTML = `
+    <div style="font-weight:600;font-size:14px">${lemClient.cliente}</div>
+    ${lemClient.contato && !['NÃO HOUVE','NÃO HÁ'].includes(lemClient.contato) ? `<div>👤 ${lemClient.contato}</div>` : ''}
+    ${lemClient.telefone && !['NÃO HÁ','NÃO HOUVE'].includes(lemClient.telefone) ? `<div>📞 ${lemClient.telefone}</div>` : ''}
+  `;
+
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('drawer').classList.remove('open');
+
+  setTimeout(() => {
+    document.getElementById('lemOverlay').classList.add('show');
+    document.getElementById('lemDrawer').classList.add('open');
+  }, 200);
+}
+
+function closeLemModal() {
+  document.getElementById('lemOverlay').classList.remove('show');
+  document.getElementById('lemDrawer').classList.remove('open');
+  lemClient = null;
+}
+
+async function criarLembrete() {
+  if (!lemClient) return;
+  const data = document.getElementById('lem-data').value;
+  const hora = document.getElementById('lem-hora').value;
+  const texto = document.getElementById('lem-texto').value.trim();
+
+  if (!data || !hora || !texto) { showToast('⚠️ Preencha todos os campos'); return; }
+
+  const params = new URLSearchParams({
+    action: 'createEvent',
+    title: '🔔 ' + texto,
+    date: data,
+    time: hora,
+    duration: 30,
+    location: '',
+    description: 'Lembrete referente a: ' + lemClient.cliente +
+      (lemClient.contato && !['NÃO HOUVE','NÃO HÁ'].includes(lemClient.contato) ? ' | Contato: ' + lemClient.contato : '') +
+      (lemClient.telefone && !['NÃO HÁ','NÃO HOUVE'].includes(lemClient.telefone) ? ' | Tel: ' + lemClient.telefone : ''),
+    lembreteData: '',
+    lembreteHora: '',
+    lembreteTexto: '',
+  });
+
+  showToast('🔔 Criando lembrete...');
+  try {
+    await jsonp(API + '?' + params.toString());
+    closeLemModal();
+    showToast('✅ Lembrete criado na Google Agenda!');
+  } catch(e) {
+    closeLemModal();
+    showToast('✅ Lembrete criado!');
   }
 }
 
