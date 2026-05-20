@@ -215,7 +215,11 @@
   <div style="background:var(--surface);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow)">
     <div style="font-size:18px;font-weight:700;margin-bottom:16px">Novo cliente</div>
     <div style="display:flex;flex-direction:column;gap:14px">
-      <div class="field"><label>Cliente *</label><input type="text" id="n-cliente" placeholder="Nome da empresa"></div>
+      <div class="field">
+        <label>Cliente *</label>
+        <input type="text" id="n-cliente" placeholder="Nome da empresa" oninput="verificarDuplicado(this.value)">
+        <div id="dup-warning" style="display:none;margin-top:6px;background:#FFF8E6;border:1.5px solid #C97A00;border-radius:var(--radius-sm);padding:10px;font-size:12px;color:#854F0B"></div>
+      </div>
       <div class="field-row">
         <div class="field"><label>Cidade *</label><input type="text" id="n-cidade" placeholder="Curitiba"></div>
         <div class="field"><label>Telefone</label><input type="tel" id="n-tel" placeholder="41 9xxxx-xxxx"></div>
@@ -698,6 +702,14 @@ async function salvarNovo() {
   const cidade = document.getElementById('n-cidade').value.trim();
   if (!cliente || !cidade) { showToast('⚠️ Preencha cliente e cidade'); return; }
 
+  // Check duplicates before saving
+  const tel = document.getElementById('n-tel').value.trim();
+  const dupes = encontrarDuplicados(cliente, tel);
+  if (dupes.length > 0) {
+    const nomes = dupes.map(d => d.cliente).join(', ');
+    if (!confirm(`Possível cliente duplicado encontrado:\n${nomes}\n\nDeseja salvar mesmo assim?`)) return;
+  }
+
   const ultimoRaw = document.getElementById('n-ultimo').value;
   const ultimoFmt = ultimoRaw ? ultimoRaw.split('-').reverse().join('/') : '';
 
@@ -976,6 +988,49 @@ async function agendarVisita() {
   } catch(e) {
     closeCalModal();
     showToast('Visita agendada!');
+  }
+}
+
+
+// --- DUPLICATE CHECK ---
+function normalizar(str) {
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, ' ')
+    .replace(/\s+/g, ' ').trim();
+}
+
+function encontrarDuplicados(nome, tel) {
+  if (!nome || nome.length < 3) return [];
+  const nomeNorm = normalizar(nome);
+  const telLimpo = tel ? tel.replace(/\D/g, '') : '';
+
+  return allClients.filter(c => {
+    // Check name similarity
+    const cNorm = normalizar(c.cliente);
+    const nomeMatch = cNorm.includes(nomeNorm) || nomeNorm.includes(cNorm) ||
+      nomeNorm.split(' ').filter(w => w.length > 3).some(w => cNorm.includes(w));
+
+    // Check phone match
+    const cTel = c.telefone ? c.telefone.replace(/\D/g, '') : '';
+    const telMatch = telLimpo && cTel && telLimpo.length >= 8 && cTel.includes(telLimpo);
+
+    return nomeMatch || telMatch;
+  });
+}
+
+function verificarDuplicado(valor) {
+  const warning = document.getElementById('dup-warning');
+  if (!warning) return;
+  const tel = document.getElementById('n-tel') ? document.getElementById('n-tel').value : '';
+  const dupes = encontrarDuplicados(valor, tel);
+
+  if (dupes.length > 0) {
+    warning.style.display = 'block';
+    warning.innerHTML = `⚠️ <strong>Possível duplicado:</strong><br>` +
+      dupes.map(d => `• ${d.cliente} — ${d.cidade} (${d.status})`).join('<br>');
+  } else {
+    warning.style.display = 'none';
   }
 }
 
