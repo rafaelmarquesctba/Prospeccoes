@@ -197,6 +197,16 @@
       <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Novos clientes por mês</div>
       <div id="dash-mensal"></div>
     </div>
+
+    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <button onclick="calNavMes(-1)" style="background:var(--bg);border:none;border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-size:16px">‹</button>
+        <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px" id="dash-cal-titulo">Calendário de contatos</div>
+        <button onclick="calNavMes(1)" style="background:var(--bg);border:none;border-radius:var(--radius-sm);padding:6px 12px;cursor:pointer;font-size:16px">›</button>
+      </div>
+      <div id="dash-calendario"></div>
+      <div id="dash-cal-detalhe" style="margin-top:12px;display:none"></div>
+    </div>
   </div>
 </div>
 
@@ -850,6 +860,9 @@ function renderDashboard() {
       </div>`;
   }
 
+  // --- Calendário ---
+  renderCalendario();
+
   // --- Evolução mensal ---
   const mesMap = {};
   allClients.forEach(c => {
@@ -1052,6 +1065,119 @@ async function criarLembrete() {
     closeLemModal();
     showToast('✅ Lembrete criado!');
   }
+}
+
+
+// --- DASHBOARD CALENDAR ---
+let calDashMes = new Date().getMonth();
+let calDashAno = new Date().getFullYear();
+
+function calNavMes(dir) {
+  calDashMes += dir;
+  if (calDashMes > 11) { calDashMes = 0; calDashAno++; }
+  if (calDashMes < 0) { calDashMes = 11; calDashAno--; }
+  renderCalendario();
+}
+
+function parseDataBR(str) {
+  if (!str) return null;
+  const p = str.split('/');
+  if (p.length !== 3) return null;
+  return new Date(p[2], p[1]-1, p[0]);
+}
+
+function renderCalendario() {
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const titulo = document.getElementById('dash-cal-titulo');
+  if (titulo) titulo.textContent = meses[calDashMes] + ' ' + calDashAno;
+
+  // Build contact map: date string -> list of client names
+  const contactMap = {};
+  allClients.forEach(c => {
+    [c.primeiroContato, c.ultimoContato].forEach(dateStr => {
+      if (!dateStr) return;
+      const d = parseDataBR(dateStr);
+      if (!d || d.getMonth() !== calDashMes || d.getFullYear() !== calDashAno) return;
+      const key = d.getDate();
+      if (!contactMap[key]) contactMap[key] = [];
+      if (!contactMap[key].includes(c.cliente)) contactMap[key].push(c.cliente);
+    });
+  });
+
+  // Build calendar grid
+  const firstDay = new Date(calDashAno, calDashMes, 1).getDay();
+  const daysInMonth = new Date(calDashAno, calDashMes+1, 0).getDate();
+  const today = new Date();
+  const isCurrentMonth = today.getMonth() === calDashMes && today.getFullYear() === calDashAno;
+
+  const dias = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  let html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">';
+
+  // Header
+  dias.forEach(d => {
+    html += `<div style="text-align:center;font-size:11px;font-weight:600;color:var(--muted);padding:4px 0">${d}</div>`;
+  });
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    html += '<div></div>';
+  }
+
+  // Days
+  for (let d = 1; d <= daysInMonth; d++) {
+    const count = contactMap[d] ? contactMap[d].length : 0;
+    const isToday = isCurrentMonth && d === today.getDate();
+    const hasContacts = count > 0;
+
+    let bg = 'transparent';
+    let color = 'var(--text)';
+    let border = '1px solid transparent';
+
+    if (isToday) { border = '2px solid var(--accent)'; }
+    if (hasContacts) {
+      const intensity = Math.min(count, 5);
+      const alphas = ['','22','44','66','88','AA'];
+      bg = '#1A3FAA' + alphas[intensity];
+      color = count >= 3 ? '#fff' : 'var(--text)';
+    }
+
+    html += `<div onclick="showCalDia(${d})" style="
+      text-align:center;padding:6px 2px;border-radius:6px;cursor:${hasContacts?'pointer':'default'};
+      background:${bg};color:${color};border:${border};position:relative;
+      font-size:12px;font-weight:${isToday?'700':'400'}
+    ">
+      ${d}
+      ${hasContacts ? `<div style="font-size:9px;font-weight:700;margin-top:1px">${count}</div>` : '<div style="font-size:9px">&nbsp;</div>'}
+    </div>`;
+  }
+
+  html += '</div>';
+  html += '<div style="display:flex;gap:12px;margin-top:10px;font-size:11px;color:var(--muted);align-items:center">';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#1A3FAA44;border-radius:3px"></div> 1-2 contatos</div>';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#1A3FAA88;border-radius:3px"></div> 3-4 contatos</div>';
+  html += '<div style="display:flex;align-items:center;gap:4px"><div style="width:12px;height:12px;background:#1A3FAAAA;border-radius:3px"></div> 5+ contatos</div>';
+  html += '</div>';
+
+  const el = document.getElementById('dash-calendario');
+  if (el) el.innerHTML = html;
+
+  // Store for click
+  window._calContactMap = contactMap;
+}
+
+function showCalDia(dia) {
+  const map = window._calContactMap || {};
+  const clientes = map[dia] || [];
+  if (!clientes.length) return;
+
+  const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const detalhe = document.getElementById('dash-cal-detalhe');
+  detalhe.style.display = 'block';
+  detalhe.innerHTML = `
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">${dia} ${meses[calDashMes]} — ${clientes.length} cliente(s)</div>
+      ${clientes.map(nome => `<div style="font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)">• ${nome}</div>`).join('')}
+    </div>`;
 }
 
 // --- PENDING QUEUE ---
