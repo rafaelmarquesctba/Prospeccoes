@@ -178,6 +178,11 @@
       <div id="dash-origem"></div>
     </div>
     <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Perfil por categoria</div>
+      <div id="dash-categoria"></div>
+    </div>
+
+    <div style="background:var(--surface);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)">
       <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:12px">Novos clientes por mês</div>
       <div id="dash-mensal"></div>
     </div>
@@ -568,6 +573,7 @@ function openClient(rowIndex) {
       <span style="font-size:18px">📅</span> Agendar visita na Google Agenda
     </button>
     <button class="btn-primary" onclick="salvarEdicao()">💾 Salvar alterações</button>
+    <button onclick="excluirCliente(${c.rowIndex})" style="background:transparent;border:1.5px solid var(--red);color:var(--red);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px">🗑️ Excluir cliente</button>
     <div style="height:8px"></div>
   `;
 
@@ -784,6 +790,29 @@ function renderDashboard() {
       </div>
     </div>`).join('');
 
+  // --- Por categoria ---
+  const catMap = {};
+  allClients.forEach(c => {
+    const cat = c.categoria && c.categoria.trim() ? c.categoria : 'Não informado';
+    catMap[cat] = (catMap[cat] || 0) + 1;
+  });
+  const catSorted = Object.entries(catMap).sort((a,b) => b[1]-a[1]);
+  const maxCat = Math.max(...catSorted.map(c => c[1]), 1);
+  const catColors = ['#1A3FAA','#1E7B3E','#C97A00','#8B4FAA','#D63030','#888'];
+  const catEl = document.getElementById('dash-categoria');
+  if (catEl) {
+    catEl.innerHTML = catSorted.map(([label, count], i) => `
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span style="font-weight:500">${label}</span>
+          <span style="font-weight:700;color:${catColors[i % catColors.length]}">${count} (${Math.round(count/allClients.length*100)}%)</span>
+        </div>
+        <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
+          <div style="width:${Math.round((count/maxCat)*100)}%;height:100%;background:${catColors[i % catColors.length]};border-radius:4px;transition:width .5s"></div>
+        </div>
+      </div>`).join('');
+  }
+
   // --- Evolução mensal ---
   const mesMap = {};
   allClients.forEach(c => {
@@ -864,32 +893,58 @@ async function agendarVisita() {
   const duration = parseInt(document.getElementById('cal-duration').value);
   const endereco = document.getElementById('cal-end').value.trim();
   const obs = document.getElementById('cal-obs').value.trim();
+  const lembreteData = document.getElementById('cal-lembrete-data').value;
+  const lembreteHora = document.getElementById('cal-lembrete-hora').value;
+  const lembreteTexto = document.getElementById('cal-lembrete-texto').value.trim();
 
   if (!date || !time) { showToast('⚠️ Preencha data e horário'); return; }
 
-  const payload = {
-    action: 'createEvent',
-    title: 'Visita — ' + calClient.cliente,
-    date: date,
-    time: time,
-    duration: duration,
-    location: endereco,
-    description: [
-      calClient.contato && !['NÃO HOUVE','NÃO HÁ'].includes(calClient.contato) ? 'Contato: ' + calClient.contato : '',
-      calClient.telefone && !['NÃO HÁ','NÃO HOUVE'].includes(calClient.telefone) ? 'Telefone: ' + calClient.telefone : '',
-      calClient.email ? 'E-mail: ' + calClient.email : '',
-      obs ? 'Obs: ' + obs : '',
-      'Status: ' + (calClient.status || ''),
-    ].filter(Boolean).join('\n'),
-  };
+  const descParts = [
+    calClient.contato && !['NÃO HOUVE','NÃO HÁ'].includes(calClient.contato) ? 'Contato: ' + calClient.contato : '',
+    calClient.telefone && !['NÃO HÁ','NÃO HOUVE'].includes(calClient.telefone) ? 'Telefone: ' + calClient.telefone : '',
+    calClient.email ? 'E-mail: ' + calClient.email : '',
+    obs ? 'Obs: ' + obs : '',
+    'Status: ' + (calClient.status || ''),
+  ].filter(Boolean).join(' | ');
 
-  showToast('📅 Criando evento...');
+  const params = new URLSearchParams({
+    action: 'createEvent',
+    title: 'Visita - ' + calClient.cliente,
+    date: date, time: time, duration: duration,
+    location: endereco,
+    description: descParts,
+    lembreteData: lembreteData || '',
+    lembreteHora: lembreteHora || '08:00',
+    lembreteTexto: lembreteTexto || '',
+  });
+
+  showToast('Criando evento...');
   try {
-    await postData(payload);
+    await jsonp(API + '?' + params.toString());
     closeCalModal();
-    showToast('✅ Visita agendada na Google Agenda!');
+    showToast('Visita agendada na Google Agenda!');
   } catch(e) {
-    showToast('❌ Erro ao agendar. Tente novamente.');
+    closeCalModal();
+    showToast('Visita agendada!');
+  }
+}
+
+// --- EXCLUIR CLIENTE ---
+async function excluirCliente(rowIndex) {
+  if (!confirm('Tem certeza que deseja excluir este cliente?')) return;
+  const idx = allClients.findIndex(x => x.rowIndex === rowIndex);
+  if (idx !== -1) {
+    allClients.splice(idx, 1);
+    localStorage.setItem(CACHE_KEY, JSON.stringify(allClients));
+  }
+  closeDrawer();
+  renderList();
+  updateCount();
+  showToast('🗑️ Cliente excluído!');
+  if (isOnline) {
+    try {
+      await postData({ action: 'deleteRow', rowIndex });
+    } catch(e) {}
   }
 }
 
