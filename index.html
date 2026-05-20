@@ -793,7 +793,7 @@ function renderDashboard() {
   // --- Por categoria ---
   const catMap = {};
   allClients.forEach(c => {
-    const cat = c.categoria && c.categoria.trim() ? c.categoria : 'Não informado';
+    const cat = c.categoria && String(c.categoria).trim() ? String(c.categoria).trim() : 'Não informado';
     catMap[cat] = (catMap[cat] || 0) + 1;
   });
   const catSorted = Object.entries(catMap).sort((a,b) => b[1]-a[1]);
