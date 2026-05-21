@@ -1253,8 +1253,10 @@ document.addEventListener('keydown', function(e) {
   if (document.getElementById('lemDrawer').classList.contains('open')) { closeLemModal(); return; }
   if (document.getElementById('drawer').classList.contains('open')) { closeDrawer(); return; }
   // If on novo or dash section, go back to lista
-  if (document.getElementById('secNovo').style.display !== 'none') { showSection('lista'); return; }
-  if (document.getElementById('secDash').style.display !== 'none') { showSection('lista'); return; }
+  const secNovo = document.getElementById('secNovo');
+  const secDash = document.getElementById('secDash');
+  if (secNovo && getComputedStyle(secNovo).display !== 'none') { showSection('lista'); return; }
+  if (secDash && getComputedStyle(secDash).display !== 'none') { showSection('lista'); return; }
 });
 }
 
