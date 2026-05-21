@@ -386,6 +386,10 @@ function postData(payload) {
 
 // --- INIT ---
 window.addEventListener('DOMContentLoaded', () => {
+  // Reset all filters on load
+  filterStatus = '';
+  filterCidade = '';
+  filterCategoria = '';
   const cached = localStorage.getItem(CACHE_KEY);
   if (cached) { allClients = JSON.parse(cached); renderList(); updateCount(); }
   loadFromServer();
@@ -442,8 +446,8 @@ function statusBadge(s) {
 
 function renderList() {
   const q = document.getElementById('searchInput').value.toLowerCase();
-  let list = allClients;
-  if (filterCategoria) list = list.filter(c => c.categoria === filterCategoria);
+  let list = [...allClients];
+  if (filterCategoria) list = list.filter(c => (c.categoria || '') === filterCategoria);
 
   if (q) list = list.filter(c =>
     c.cliente.toLowerCase().includes(q) ||
