@@ -1241,6 +1241,17 @@ function addPending(payload) {
   pending.push(payload);
   localStorage.setItem(PENDING_KEY, JSON.stringify(pending));
   updatePendingBadge();
+
+// --- ESC KEY ---
+document.addEventListener('keydown', function(e) {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('calDrawer').classList.contains('open')) { closeCalModal(); return; }
+  if (document.getElementById('lemDrawer').classList.contains('open')) { closeLemModal(); return; }
+  if (document.getElementById('drawer').classList.contains('open')) { closeDrawer(); return; }
+  // If on novo or dash section, go back to lista
+  if (document.getElementById('secNovo').style.display !== 'none') { showSection('lista'); return; }
+  if (document.getElementById('secDash').style.display !== 'none') { showSection('lista'); return; }
+});
 }
 
 function updatePendingBadge() {
