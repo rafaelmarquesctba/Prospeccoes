@@ -227,14 +227,35 @@
         <div class="field"><label>Cidade *</label><input type="text" id="n-cidade" placeholder="Curitiba"></div>
         <div class="field"><label>Telefone</label><input type="tel" id="n-tel" placeholder="41 9xxxx-xxxx"></div>
       </div>
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Contato 1</div>
       <div class="field-row">
-        <div class="field"><label>Contato</label><input type="text" id="n-contato" placeholder="Nome"></div>
+        <div class="field"><label>Nome</label><input type="text" id="n-contato" placeholder="Nome"></div>
         <div class="field"><label>Função</label>
           <select id="n-funcao">
             <option>COMPRAS</option><option>PROPRIETÁRIO</option><option>DIRETOR</option>
             <option>SECRETÁRIA</option><option>OUTROS.</option>
           </select>
         </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Telefone</label><input type="tel" id="n-tel" placeholder="41 9xxxx-xxxx"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="n-email" placeholder="email@empresa.com"></div>
+      </div>
+
+      <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;margin-top:4px">Contato 2</div>
+      <div class="field-row">
+        <div class="field"><label>Nome</label><input type="text" id="n-contato2" placeholder="Nome"></div>
+        <div class="field"><label>Função</label>
+          <select id="n-funcao2">
+            <option value="">-</option>
+            <option>COMPRAS</option><option>PROPRIETÁRIO</option><option>DIRETOR</option>
+            <option>SECRETÁRIA</option><option>OUTROS.</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Telefone</label><input type="tel" id="n-tel2" placeholder="41 9xxxx-xxxx"></div>
+        <div class="field"><label>E-mail</label><input type="email" id="n-email2" placeholder="email@empresa.com"></div>
       </div>
       <div class="field"><label>Categoria</label>
         <select id="n-categoria">
@@ -248,7 +269,6 @@
         </select>
       </div>
       <div class="field"><label>Endereço</label><input type="text" id="n-end" placeholder="Rua, número"></div>
-      <div class="field"><label>E-mail</label><input type="email" id="n-email" placeholder="email@empresa.com"></div>
       <div class="field"><label>Origem</label>
         <select id="n-origem">
           <option>GOOGLE</option><option>INDICAÇÃO</option><option>SEBRAE</option>
@@ -576,26 +596,53 @@ function openClient(rowIndex) {
       <input type="date" id="edit-ultimo" value="${c.ultimoContato ? c.ultimoContato.split('/').reverse().join('-') : new Date().toISOString().split('T')[0]}">
     </div>
 
-    <div class="field"><label>Nome do contato</label>
-      <input type="text" id="edit-contato" value="${!['NÃO HOUVE','NÃO HÁ'].includes(c.contato) ? c.contato : ''}">
+    <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px">Contato 1</div>
+    <div class="field-row">
+      <div class="field"><label>Nome</label>
+        <input type="text" id="edit-contato" value="${!['NÃO HOUVE','NÃO HÁ'].includes(c.contato) ? c.contato : ''}">
+      </div>
+      <div class="field"><label>Função</label>
+        <select id="edit-funcao">
+          <option value="COMPRAS" ${c.funcao === 'COMPRAS' ? 'selected' : ''}>COMPRAS</option>
+          <option value="PROPRIETÁRIO" ${c.funcao === 'PROPRIETÁRIO' ? 'selected' : ''}>PROPRIETÁRIO</option>
+          <option value="DIRETOR" ${c.funcao === 'DIRETOR' ? 'selected' : ''}>DIRETOR</option>
+          <option value="SECRETÁRIA" ${c.funcao === 'SECRETÁRIA' ? 'selected' : ''}>SECRETÁRIA</option>
+          <option value="OUTROS." ${c.funcao === 'OUTROS.' ? 'selected' : ''}>OUTROS</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field"><label>Telefone</label>
+        <input type="tel" id="edit-tel" value="${!['NÃO HÁ','NÃO HOUVE'].includes(c.telefone) ? c.telefone : ''}">
+      </div>
+      <div class="field"><label>E-mail</label>
+        <input type="email" id="edit-email" value="${c.email || ''}">
+      </div>
     </div>
 
-    <div class="field"><label>Função</label>
-      <select id="edit-funcao">
-        <option value="COMPRAS" ${c.funcao === 'COMPRAS' ? 'selected' : ''}>COMPRAS</option>
-        <option value="PROPRIETÁRIO" ${c.funcao === 'PROPRIETÁRIO' ? 'selected' : ''}>PROPRIETÁRIO</option>
-        <option value="DIRETOR" ${c.funcao === 'DIRETOR' ? 'selected' : ''}>DIRETOR</option>
-        <option value="SECRETÁRIA" ${c.funcao === 'SECRETÁRIA' ? 'selected' : ''}>SECRETÁRIA</option>
-        <option value="OUTROS." ${c.funcao === 'OUTROS.' ? 'selected' : ''}>OUTROS</option>
-      </select>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px;margin-top:4px">Contato 2</div>
+    <div class="field-row">
+      <div class="field"><label>Nome</label>
+        <input type="text" id="edit-contato2" value="${c.contato2 || ''}">
+      </div>
+      <div class="field"><label>Função</label>
+        <select id="edit-funcao2">
+          <option value="" ${!c.funcao2 ? 'selected' : ''}></option>
+          <option value="COMPRAS" ${c.funcao2 === 'COMPRAS' ? 'selected' : ''}>COMPRAS</option>
+          <option value="PROPRIETÁRIO" ${c.funcao2 === 'PROPRIETÁRIO' ? 'selected' : ''}>PROPRIETÁRIO</option>
+          <option value="DIRETOR" ${c.funcao2 === 'DIRETOR' ? 'selected' : ''}>DIRETOR</option>
+          <option value="SECRETÁRIA" ${c.funcao2 === 'SECRETÁRIA' ? 'selected' : ''}>SECRETÁRIA</option>
+          <option value="OUTROS." ${c.funcao2 === 'OUTROS.' ? 'selected' : ''}>OUTROS</option>
+        </select>
+      </div>
     </div>
-
-    <div class="field"><label>Telefone</label>
-      <input type="tel" id="edit-tel" value="${!['NÃO HÁ','NÃO HOUVE'].includes(c.telefone) ? c.telefone : ''}">
-    </div>
-
-    <div class="field"><label>E-mail</label>
-      <input type="email" id="edit-email" value="${c.email || ''}">
+    <div class="field-row">
+      <div class="field"><label>Telefone</label>
+        <input type="tel" id="edit-tel2" value="${c.telefone2 || ''}">
+      </div>
+      <div class="field"><label>E-mail</label>
+        <input type="email" id="edit-email2" value="${c.email2 || ''}">
+      </div>
     </div>
 
     <div class="field"><label>Endereço</label>
@@ -710,6 +757,10 @@ async function salvarEdicao() {
     funcao: document.getElementById('edit-funcao').value || c.funcao,
     telefone: document.getElementById('edit-tel').value || c.telefone,
     email: document.getElementById('edit-email').value || c.email,
+    contato2: document.getElementById('edit-contato2').value || '',
+    funcao2: document.getElementById('edit-funcao2').value || '',
+    telefone2: document.getElementById('edit-tel2').value || '',
+    email2: document.getElementById('edit-email2').value || '',
     endereco: document.getElementById('edit-end').value || c.endereco,
     cidade: document.getElementById('edit-cidade').value || c.cidade,
     status: editStatus || c.status,
@@ -765,6 +816,10 @@ async function salvarNovo() {
     contato: document.getElementById('n-contato').value,
     funcao: document.getElementById('n-funcao').value,
     email: document.getElementById('n-email').value,
+    contato2: document.getElementById('n-contato2').value,
+    funcao2: document.getElementById('n-funcao2').value,
+    telefone2: document.getElementById('n-tel2').value,
+    email2: document.getElementById('n-email2').value,
     status: newStatus,
     categoria: document.getElementById('n-categoria').value,
     ultimoContato: ultimoFmt,
@@ -778,7 +833,7 @@ async function salvarNovo() {
   updateCount();
 
   // Reset form
-  ['n-cliente','n-cidade','n-end','n-tel','n-contato','n-email','n-obs'].forEach(id => document.getElementById(id).value = '');
+  ['n-cliente','n-cidade','n-end','n-tel','n-contato','n-email','n-obs','n-contato2','n-tel2','n-email2'].forEach(id => document.getElementById(id).value = '');
   setToday();
   newStatus = 'PROSPECÇÃO';
   document.querySelectorAll('#new-status-grid .status-pill').forEach(p => p.className = 'status-pill');
