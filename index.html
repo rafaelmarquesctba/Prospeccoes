@@ -621,26 +621,7 @@ function openClient(rowIndex) {
     <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Histórico de atividades</div>
 
     <div id="edit-historico" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:220px;overflow-y:auto">
-      ${(c.observacoes || '').split('|||').filter(Boolean).map((entry, i) => {
-        const parts = entry.split('::');
-        const data = parts[0] || '';
-        const tipo = parts[1] || '';
-        const texto = parts[2] || '';
-        const tipoIcon = {'Visita':'🏢','Ligação':'📞','WhatsApp':'💬','E-mail':'📧','Reunião':'🤝','Outros':'📝'}[tipo] || '📝';
-        return \`<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);position:relative">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-            <span style="font-size:12px;font-weight:600;color:var(--accent)">\${tipoIcon} \${tipo}</span>
-            <div style="display:flex;gap:6px;align-items:center">
-              <span style="font-size:11px;color:var(--muted)">\${data}</span>
-              <button onclick="editarEntrada(\${i})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
-              <button onclick="apagarEntrada(\${i})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">🗑️</button>
-            </div>
-          </div>
-          <div id="entry-text-\${i}" style="font-size:13px;line-height:1.5;color:var(--text)">\${texto}</div>
-          <textarea id="entry-edit-\${i}" style="display:none;width:100%;font-size:13px;padding:6px;border:1px solid var(--border);border-radius:4px;margin-top:4px" rows="2">\${texto}</textarea>
-          <button id="entry-save-\${i}" onclick="salvarEntrada(\${i})" style="display:none;margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:12px;cursor:pointer">Salvar</button>
-        </div>\`;
-      }).join('') || '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">Nenhuma atividade registrada</div>'}
+      ${buildHistorico(c.observacoes)}
     </div>
 
     <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Nova atividade</div>
@@ -1095,6 +1076,34 @@ function verificarDuplicado(valor) {
   }
 }
 
+
+
+// --- BUILD HISTORICO ---
+function buildHistorico(obs) {
+  const icons = {'Visita':'🏢','Ligação':'📞','WhatsApp':'💬','E-mail':'📧','Reunião':'🤝','Outros':'📝'};
+  const entradas = (obs || '').split('|||').filter(Boolean);
+  if (!entradas.length) return '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">Nenhuma atividade registrada</div>';
+  return entradas.map(function(entry, i) {
+    var parts = entry.split('::');
+    var data = parts[0] || '';
+    var tipo = parts[1] || '';
+    var texto = parts[2] || '';
+    var icon = icons[tipo] || '📝';
+    return '<div style="background:var(--bg);border-radius:8px;padding:10px;border:1px solid var(--border)">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
+        '<span style="font-size:12px;font-weight:600;color:var(--accent)">' + icon + ' ' + tipo + '</span>' +
+        '<div style="display:flex;gap:6px;align-items:center">' +
+          '<span style="font-size:11px;color:var(--muted)">' + data + '</span>' +
+          '<button onclick="editarEntrada(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>' +
+          '<button onclick="apagarEntrada(' + i + ')" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">🗑️</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="entry-text-' + i + '" style="font-size:13px;line-height:1.5;color:var(--text)">' + texto + '</div>' +
+      '<textarea id="entry-edit-' + i + '" style="display:none;width:100%;font-size:13px;padding:6px;border:1px solid var(--border);border-radius:4px;margin-top:4px" rows="2">' + texto + '</textarea>' +
+      '<button id="entry-save-' + i + '" onclick="salvarEntrada(' + i + ')" style="display:none;margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:12px;cursor:pointer">Salvar</button>' +
+    '</div>';
+  }).join('');
+}
 
 // --- ACTIVITY ENTRIES ---
 function editarEntrada(i) {
