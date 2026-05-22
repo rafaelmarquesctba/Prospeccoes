@@ -618,8 +618,52 @@ function openClient(rowIndex) {
       </select>
     </div>
 
-    <div class="field"><label>Observação (adicionar ao histórico)</label>
-      <textarea id="edit-obs" placeholder="Resultado da visita, próximos passos..."></textarea>
+    <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Histórico de atividades</div>
+
+    <div id="edit-historico" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:220px;overflow-y:auto">
+      ${(c.observacoes || '').split('|||').filter(Boolean).map((entry, i) => {
+        const parts = entry.split('::');
+        const data = parts[0] || '';
+        const tipo = parts[1] || '';
+        const texto = parts[2] || '';
+        const tipoIcon = {'Visita':'🏢','Ligação':'📞','WhatsApp':'💬','E-mail':'📧','Reunião':'🤝','Outros':'📝'}[tipo] || '📝';
+        return \`<div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);position:relative">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:12px;font-weight:600;color:var(--accent)">\${tipoIcon} \${tipo}</span>
+            <div style="display:flex;gap:6px;align-items:center">
+              <span style="font-size:11px;color:var(--muted)">\${data}</span>
+              <button onclick="editarEntrada(\${i})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">✏️</button>
+              <button onclick="apagarEntrada(\${i})" style="background:none;border:none;cursor:pointer;font-size:13px;padding:2px 4px">🗑️</button>
+            </div>
+          </div>
+          <div id="entry-text-\${i}" style="font-size:13px;line-height:1.5;color:var(--text)">\${texto}</div>
+          <textarea id="entry-edit-\${i}" style="display:none;width:100%;font-size:13px;padding:6px;border:1px solid var(--border);border-radius:4px;margin-top:4px" rows="2">\${texto}</textarea>
+          <button id="entry-save-\${i}" onclick="salvarEntrada(\${i})" style="display:none;margin-top:6px;background:var(--accent);color:#fff;border:none;border-radius:4px;padding:5px 12px;font-size:12px;cursor:pointer">Salvar</button>
+        </div>\`;
+      }).join('') || '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">Nenhuma atividade registrada</div>'}
+    </div>
+
+    <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Nova atividade</div>
+    <div class="field-row">
+      <div class="field">
+        <label>Tipo</label>
+        <select id="edit-tipo-atividade">
+          <option>Visita</option>
+          <option>Ligação</option>
+          <option>WhatsApp</option>
+          <option>E-mail</option>
+          <option>Reunião</option>
+          <option>Outros</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="edit-data-atividade" value="${new Date().toISOString().split('T')[0]}">
+      </div>
+    </div>
+    <div class="field">
+      <label>Descrição</label>
+      <textarea id="edit-obs" placeholder="Resultado, próximos passos..." rows="3"></textarea>
     </div>
 
     <button onclick="openCalModal(${c.rowIndex})" style="background:var(--accent-light);color:var(--accent);border:1.5px solid var(--accent);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
@@ -664,10 +708,18 @@ async function salvarEdicao() {
 
   const ultimoRaw = document.getElementById('edit-ultimo').value;
   const ultimoFmt = ultimoRaw ? ultimoRaw.split('-').reverse().join('/') : c.ultimoContato;
+
+  // Build new activity entry
   const novaObs = document.getElementById('edit-obs').value.trim();
-  const obsAtualizada = novaObs
-    ? (c.observacoes ? c.observacoes + ' | ' + new Date().toLocaleDateString('pt-BR') + ': ' + novaObs : novaObs)
-    : c.observacoes;
+  const tipoAtiv = document.getElementById('edit-tipo-atividade').value;
+  const dataAtivRaw = document.getElementById('edit-data-atividade').value;
+  const dataAtiv = dataAtivRaw ? dataAtivRaw.split('-').reverse().join('/') : new Date().toLocaleDateString('pt-BR');
+
+  let obsAtualizada = c.observacoes || '';
+  if (novaObs) {
+    const novaEntrada = dataAtiv + '::' + tipoAtiv + '::' + novaObs;
+    obsAtualizada = novaEntrada + (obsAtualizada ? '|||' + obsAtualizada : '');
+  }
 
   const payload = {
     action: 'update',
@@ -689,10 +741,12 @@ async function salvarEdicao() {
   if (idx !== -1) {
     allClients[idx] = { ...allClients[idx], ...payload, ultimoContato: ultimoFmt };
     localStorage.setItem(CACHE_KEY, JSON.stringify(allClients));
+    currentClient = allClients[idx];
   }
   renderList();
   updateCount();
-  closeDrawer();
+  // Reopen drawer with updated data to show new history entry
+  openClient(c.rowIndex);
   showToast('✅ Alteração salva!');
 
   if (isOnline) {
@@ -1039,6 +1093,57 @@ function verificarDuplicado(valor) {
   } else {
     warning.style.display = 'none';
   }
+}
+
+
+// --- ACTIVITY ENTRIES ---
+function editarEntrada(i) {
+  document.getElementById('entry-text-' + i).style.display = 'none';
+  document.getElementById('entry-edit-' + i).style.display = 'block';
+  document.getElementById('entry-save-' + i).style.display = 'inline-block';
+}
+
+function salvarEntrada(i) {
+  if (!currentClient) return;
+  const novoTexto = document.getElementById('entry-edit-' + i).value.trim();
+  const entradas = (currentClient.observacoes || '').split('|||').filter(Boolean);
+  const parts = entradas[i].split('::');
+  entradas[i] = parts[0] + '::' + parts[1] + '::' + novoTexto;
+  currentClient.observacoes = entradas.join('|||');
+
+  const idx = allClients.findIndex(x => x.rowIndex === currentClient.rowIndex);
+  if (idx !== -1) {
+    allClients[idx].observacoes = currentClient.observacoes;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(allClients));
+  }
+
+  const payload = { action: 'update', rowIndex: currentClient.rowIndex, observacoes: currentClient.observacoes };
+  if (isOnline) postData(payload).catch(() => addPending(payload));
+  else addPending(payload);
+
+  openClient(currentClient.rowIndex);
+  showToast('✅ Entrada atualizada!');
+}
+
+function apagarEntrada(i) {
+  if (!currentClient) return;
+  if (!confirm('Apagar esta atividade?')) return;
+  const entradas = (currentClient.observacoes || '').split('|||').filter(Boolean);
+  entradas.splice(i, 1);
+  currentClient.observacoes = entradas.join('|||');
+
+  const idx = allClients.findIndex(x => x.rowIndex === currentClient.rowIndex);
+  if (idx !== -1) {
+    allClients[idx].observacoes = currentClient.observacoes;
+    localStorage.setItem(CACHE_KEY, JSON.stringify(allClients));
+  }
+
+  const payload = { action: 'update', rowIndex: currentClient.rowIndex, observacoes: currentClient.observacoes };
+  if (isOnline) postData(payload).catch(() => addPending(payload));
+  else addPending(payload);
+
+  openClient(currentClient.rowIndex);
+  showToast('🗑️ Entrada apagada!');
 }
 
 // --- EXCLUIR CLIENTE ---
