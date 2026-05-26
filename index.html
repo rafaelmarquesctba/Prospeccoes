@@ -529,8 +529,8 @@ function renderList() {
               ${c.cidade ? `<span>📍 ${c.cidade}</span>` : ''}
               ${c.contato && !['NÃO HOUVE','NÃO HÁ'].includes(c.contato) ? `<span>👤 ${c.contato}</span>` : ''}
               ${c.telefone && !['NÃO HÁ','NÃO HOUVE'].includes(c.telefone) ? `<span>📞 ${c.telefone}</span>` : ''}
-              ${c.categoria ? `<span>🏷️ ${c.categoria}</span>` : ''}$
-              {c.fase ? `<span>🏗️ ${c.fase}</span>` : ''}
+              ${c.categoria ? `<span>🏷️ ${c.categoria}</span>` : ''}
+              ${c.fase ? `<span>🏗️ ${c.fase}</span>` : ''}
             </div>
             ${c.observacoes ? `<div class="card-obs">${c.observacoes}</div>` : ''}
           </div>
