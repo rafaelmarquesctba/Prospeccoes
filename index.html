@@ -497,7 +497,7 @@ function renderList() {
     c.cliente.toLowerCase().includes(q) ||
     c.contato.toLowerCase().includes(q) ||
     c.cidade.toLowerCase().includes(q) ||
-    c.telefone.toLowerCase().includes(q)
+    String(c.telefone || '').toLowerCase().includes(q)
   );
 
   if (currentTab === 'urgente') list = list.filter(c => { const d = dias(c.ultimoContato); return d !== null && d >= 90 && c.status !== 'DECLINOU'; });
@@ -579,7 +579,7 @@ function openClient(rowIndex) {
 
   const d = dias(c.ultimoContato);
   const wppMsg = encodeURIComponent(`Olá ${c.contato && !['NÃO HOUVE','NÃO HÁ'].includes(c.contato) ? c.contato : c.cliente}! Aqui é o Rafael da Tintas Renner. Estou passando para retomar nosso contato — há alguma obra entrando em fase de pintura? Podemos falar pessoalmente por estes dias?`);
-  const tel = c.telefone ? c.telefone.replace(/\D/g,'') : '';
+  const tel = c.telefone ? String(c.telefone).replace(/\D/g,'') : '';
   const wppLink = tel ? `https://wa.me/55${tel}?text=${wppMsg}` : `https://wa.me/?text=${wppMsg}`;
 
   document.getElementById('drawerBody').innerHTML = `
@@ -1144,7 +1144,7 @@ function encontrarDuplicados(nome, tel) {
       nomeNorm.split(' ').filter(w => w.length > 3).some(w => cNorm.includes(w));
 
     // Check phone match
-    const cTel = c.telefone ? c.telefone.replace(/\D/g, '') : '';
+    const cTel = c.telefone ? String(c.telefone).replace(/\D/g, '') : '';
     const telMatch = telLimpo && cTel && telLimpo.length >= 8 && cTel.includes(telLimpo);
 
     return nomeMatch || telMatch;
