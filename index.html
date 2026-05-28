@@ -867,11 +867,21 @@ async function salvarNovo() {
   renderList();
   updateCount();
 
-  // Reset form
-  ['n-cliente','n-cidade','n-end','n-tel','n-contato','n-email','n-obs','n-contato2','n-tel2','n-email2'].forEach(id => document.getElementById(id).value = '');
-  setToday();
+  // Reset form - text fields
+  ['n-cliente','n-cidade','n-end','n-tel','n-contato','n-email','n-obs','n-contato2','n-tel2','n-email2','n-email'].forEach(id => { const el = document.getElementById(id); if(el) el.value = ''; });
+  // Reset selects
+  document.getElementById('n-origem').selectedIndex = 0;
+  document.getElementById('n-funcao').selectedIndex = 0;
+  document.getElementById('n-funcao2').selectedIndex = 0;
+  document.getElementById('n-fase').selectedIndex = 0;
+  document.getElementById('n-categoria').selectedIndex = 0;
+  // Reset status pills
   newStatus = 'PROSPECÇÃO';
   document.querySelectorAll('#new-status-grid .status-pill').forEach(p => p.className = 'status-pill');
+  // Reset duplicate warning
+  const dupWarn = document.getElementById('dup-warning');
+  if (dupWarn) dupWarn.style.display = 'none';
+  setToday();
   showSection('lista');
   showToast('✅ Cliente salvo!');
 
