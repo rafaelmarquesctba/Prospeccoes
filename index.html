@@ -374,6 +374,27 @@
   </div>
 </div>
 
+<!-- ANEXOS MODAL -->
+<div class="overlay" id="anexOverlay" onclick="closeAnexModal()"></div>
+<div class="drawer" id="anexDrawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-header">
+    <span class="drawer-title">📎 Arquivos do cliente</span>
+    <button class="close-btn" onclick="closeAnexModal()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div id="anex-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:600;margin-bottom:4px"></div>
+    <div id="anex-files-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:250px;overflow-y:auto"></div>
+    <div class="field">
+      <label>Adicionar arquivo(s)</label>
+      <input type="file" id="anex-file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="padding:8px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);width:100%">
+    </div>
+    <button class="btn-primary" onclick="uploadAnexo()" id="anex-upload-btn">📤 Enviar arquivo(s)</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Arquivos salvos no Google Drive — Prospecções Renner</div>
+    <div style="height:8px"></div>
+  </div>
+</div>
+
 <!-- OVERLAY + DRAWER -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
@@ -732,6 +753,9 @@ function openClient(rowIndex) {
     </button>
     <button onclick="openLemModal(${c.rowIndex})" style="background:#FFF8E6;color:#C97A00;border:1.5px solid #C97A00;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
       <span style="font-size:18px">🔔</span> Criar lembrete na agenda
+    </button>
+    <button onclick="openAnexModal(${c.rowIndex})" style="background:#F0F7FF;color:#1A3FAA;border:1.5px solid #1A3FAA;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:4px">
+      <span style="font-size:18px">📎</span> Arquivos e anexos
     </button>
     <button class="btn-primary" onclick="salvarEdicao()">💾 Salvar alterações</button>
     <button onclick="excluirCliente(${c.rowIndex})" style="background:transparent;border:1.5px solid var(--red);color:var(--red);padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;width:100%;margin-top:8px">🗑️ Excluir cliente</button>
@@ -1274,6 +1298,127 @@ async function excluirCliente(rowIndex) {
   }
 }
 
+
+
+// --- ANEXOS ---
+let anexClient = null;
+
+function openAnexModal(rowIndex) {
+  anexClient = allClients.find(x => x.rowIndex === rowIndex);
+  if (!anexClient) return;
+
+  document.getElementById('anex-client-info').textContent = anexClient.cliente;
+  document.getElementById('anex-file-input').value = '';
+  document.getElementById('anex-files-list').innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Carregando arquivos...</div>';
+
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('drawer').classList.remove('open');
+
+  setTimeout(() => {
+    document.getElementById('anexOverlay').classList.add('show');
+    document.getElementById('anexDrawer').classList.add('open');
+    loadAnexos();
+  }, 200);
+}
+
+function closeAnexModal() {
+  document.getElementById('anexOverlay').classList.remove('show');
+  document.getElementById('anexDrawer').classList.remove('open');
+  anexClient = null;
+}
+
+async function loadAnexos() {
+  if (!anexClient) return;
+  try {
+    const params = new URLSearchParams({ action: 'getClientFiles', clienteName: anexClient.cliente });
+    const data = await jsonp(API + '?' + params.toString());
+    renderAnexos(data.files || []);
+  } catch(e) {
+    renderAnexos([]);
+  }
+}
+
+function fileIcon(mime) {
+  if (mime && mime.includes('pdf')) return '📄';
+  if (mime && (mime.includes('word') || mime.includes('document'))) return '📝';
+  if (mime && (mime.includes('excel') || mime.includes('sheet'))) return '📊';
+  if (mime && mime.includes('image')) return '🖼️';
+  return '📎';
+}
+
+function renderAnexos(files) {
+  const el = document.getElementById('anex-files-list');
+  if (!files.length) {
+    el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">Nenhum arquivo anexado</div>';
+    return;
+  }
+  el.innerHTML = files.map(f => `
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">${fileIcon(f.mimeType)}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.fileName}</div>
+        <div style="font-size:11px;color:var(--muted)">${f.date}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <a href="${f.viewUrl}" target="_blank" style="background:var(--accent-light);color:var(--accent);border:none;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none">Abrir</a>
+        <button onclick="deletarAnexo('${f.fileId}')" style="background:var(--red-light);color:var(--red);border:none;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">🗑️</button>
+      </div>
+    </div>`).join('');
+}
+
+async function uploadAnexo() {
+  if (!anexClient) return;
+  const input = document.getElementById('anex-file-input');
+  if (!input.files.length) { showToast('⚠️ Selecione um arquivo'); return; }
+
+  const btn = document.getElementById('anex-upload-btn');
+  btn.textContent = '⏳ Enviando...';
+  btn.disabled = true;
+
+  let successCount = 0;
+  for (const file of input.files) {
+    try {
+      const base64 = await fileToBase64(file);
+      const params = {
+        action: 'uploadFile',
+        clienteName: anexClient.cliente,
+        fileName: file.name,
+        mimeType: file.type || 'application/octet-stream',
+        fileData: base64,
+      };
+      await postData(params);
+      successCount++;
+    } catch(e) {
+      console.error('Upload error:', e);
+    }
+  }
+
+  btn.textContent = '📤 Enviar arquivo(s)';
+  btn.disabled = false;
+  input.value = '';
+  showToast(`✅ ${successCount} arquivo(s) enviado(s)!`);
+  loadAnexos();
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function deletarAnexo(fileId) {
+  if (!confirm('Apagar este arquivo permanentemente?')) return;
+  try {
+    await postData({ action: 'deleteFile', fileId });
+    showToast('🗑️ Arquivo apagado!');
+    loadAnexos();
+  } catch(e) {
+    showToast('❌ Erro ao apagar');
+  }
+}
 
 // --- LEMBRETE RÁPIDO ---
 let lemClient = null;
