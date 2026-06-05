@@ -1403,7 +1403,7 @@ async function uploadAnexo() {
 
     try {
       const base64 = await fileToBase64(file);
-      const CHUNK_SIZE = 100000; // 100KB chunks
+      const CHUNK_SIZE = 7000; // 7KB chunks (safe for URL)
       const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
       const fileId = Date.now() + '_' + Math.random().toString(36).substr(2,6);
 
