@@ -1330,13 +1330,20 @@ function closeAnexModal() {
 }
 
 async function loadAnexos() {
-  if (!anexClient) return;
+  if (!anexClient) {
+    const el = document.getElementById('anex-files-list');
+    if (el) el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">Abra um cliente para ver os arquivos</div>';
+    return;
+  }
+  const el = document.getElementById('anex-files-list');
+  if (el) el.innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:12px">⏳ Carregando arquivos...</div>';
   try {
     const params = new URLSearchParams({ action: 'getClientFiles', clienteName: anexClient.cliente });
     const data = await jsonp(API + '?' + params.toString());
     renderAnexos(data.files || []);
   } catch(e) {
-    renderAnexos([]);
+    console.error('loadAnexos error:', e);
+    if (el) el.innerHTML = '<div style="font-size:13px;color:var(--red);text-align:center;padding:12px">❌ Erro ao carregar arquivos</div>';
   }
 }
 
