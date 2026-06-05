@@ -386,21 +386,12 @@
     <div id="anex-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:600;margin-bottom:4px"></div>
     <div id="anex-files-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:250px;overflow-y:auto"></div>
 
-    <div class="field">
-      <label>Selecionar arquivo(s)</label>
-      <input type="file" id="anex-file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="padding:8px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);width:100%;font-size:13px">
-    </div>
-    <div id="anex-progress" style="display:none;margin-bottom:8px">
-      <div style="background:var(--bg);border-radius:4px;height:8px;overflow:hidden">
-        <div id="anex-progress-bar" style="height:100%;background:var(--accent);border-radius:4px;width:0%;transition:width .3s"></div>
-      </div>
-      <div id="anex-progress-text" style="font-size:11px;color:var(--muted);margin-top:4px;text-align:center"></div>
-    </div>
     <div style="display:flex;gap:8px">
-      <button class="btn-primary" onclick="uploadAnexo()" id="anex-upload-btn" style="flex:1">📤 Enviar arquivo(s)</button>
+      <button class="btn-primary" onclick="uploadAnexo()" id="anex-upload-btn" style="flex:1">📤 Enviar arquivo</button>
       <button onclick="uploadAnexoDrive()" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;font-size:14px" title="Abrir pasta no Drive">📂</button>
       <button onclick="loadAnexos()" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;font-size:14px" title="Atualizar lista">🔄</button>
     </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:6px;text-align:center">📤 Abre formulário para envio · 📂 Abre pasta no Drive · 🔄 Atualiza lista</div>
     <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Arquivos salvos no Google Drive — Prospecções Renner</div>
     <div style="height:8px"></div>
   </div>
@@ -1382,64 +1373,18 @@ function renderAnexos(files) {
 
 async function uploadAnexo() {
   if (!anexClient) return;
-  const input = document.getElementById('anex-file-input');
-  if (!input || !input.files.length) { showToast('⚠️ Selecione um arquivo'); return; }
-
-  const btn = document.getElementById('anex-upload-btn');
-  const progress = document.getElementById('anex-progress');
-  const progressBar = document.getElementById('anex-progress-bar');
-  const progressText = document.getElementById('anex-progress-text');
-
-  btn.disabled = true;
-  btn.textContent = '⏳ Enviando...';
-  progress.style.display = 'block';
-
-  const files = Array.from(input.files);
-  let done = 0;
-
-  for (const file of files) {
-    progressText.textContent = `Enviando ${file.name} (${done + 1}/${files.length})...`;
-    progressBar.style.width = Math.round((done / files.length) * 100) + '%';
-
-    try {
-      const base64 = await fileToBase64(file);
-      const CHUNK_SIZE = 7000; // 7KB chunks (safe for URL)
-      const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
-      const fileId = Date.now() + '_' + Math.random().toString(36).substr(2,6);
-
-      for (let i = 0; i < totalChunks; i++) {
-        const chunk = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
-        progressText.textContent = `${file.name}: chunk ${i+1}/${totalChunks}...`;
-        progressBar.style.width = Math.round(((done + (i/totalChunks)) / files.length) * 100) + '%';
-
-        const params = new URLSearchParams({
-          action: 'uploadChunk',
-          clienteName: anexClient.cliente,
-          fileName: file.name,
-          mimeType: file.type || 'application/octet-stream',
-          fileId: fileId,
-          chunkIndex: i,
-          totalChunks: totalChunks,
-          chunkData: chunk,
-        });
-        await jsonp(API + '?' + params.toString());
-      }
-      done++;
-    } catch(e) {
-      console.error('Upload error:', e);
-      showToast('❌ Erro ao enviar ' + file.name);
-    }
-  }
-
-  progressBar.style.width = '100%';
-  progressText.textContent = `✅ ${done} arquivo(s) enviado(s)!`;
-  setTimeout(() => { progress.style.display = 'none'; }, 2000);
-
-  btn.disabled = false;
-  btn.textContent = '📤 Enviar arquivo(s)';
-  input.value = '';
-  showToast(`✅ ${done} arquivo(s) enviado(s)!`);
-  loadAnexos();
+  // Open Google Form with client name pre-filled
+  const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfzJbNr3sgLvS4tVKOlZSsGom8_kxAy9npVmTGolLgiM9p4FQ/viewform?usp=pp_url&entry.1759910177=CLIENTE_NAME';
+  const url = formUrl.replace('CLIENTE_NAME', encodeURIComponent(anexClient.cliente));
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  showToast('📋 Formulário aberto — anexe o arquivo e envie');
+  setTimeout(() => loadAnexos(), 8000);
 }
 
 async function uploadAnexoDrive() {
