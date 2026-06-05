@@ -1307,7 +1307,7 @@ function openAnexModal(rowIndex) {
   if (!anexClient) return;
 
   document.getElementById('anex-client-info').textContent = anexClient.cliente;
-  document.getElementById('anex-file-input').value = '';
+  // file input removed - Drive-based upload
   document.getElementById('anex-files-list').innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Carregando arquivos...</div>';
 
   document.getElementById('overlay').classList.remove('show');
