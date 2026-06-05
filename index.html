@@ -1403,17 +1403,30 @@ async function uploadAnexo() {
 
     try {
       const base64 = await fileToBase64(file);
-      // Send via JSONP GET (works for files up to ~3MB)
-      const params = new URLSearchParams({
-        action: 'uploadFile',
-        clienteName: anexClient.cliente,
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        fileData: base64,
-      });
-      await jsonp(API + '?' + params.toString());
+      const CHUNK_SIZE = 100000; // 100KB chunks
+      const totalChunks = Math.ceil(base64.length / CHUNK_SIZE);
+      const fileId = Date.now() + '_' + Math.random().toString(36).substr(2,6);
+
+      for (let i = 0; i < totalChunks; i++) {
+        const chunk = base64.substring(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+        progressText.textContent = `${file.name}: chunk ${i+1}/${totalChunks}...`;
+        progressBar.style.width = Math.round(((done + (i/totalChunks)) / files.length) * 100) + '%';
+
+        const params = new URLSearchParams({
+          action: 'uploadChunk',
+          clienteName: anexClient.cliente,
+          fileName: file.name,
+          mimeType: file.type || 'application/octet-stream',
+          fileId: fileId,
+          chunkIndex: i,
+          totalChunks: totalChunks,
+          chunkData: chunk,
+        });
+        await jsonp(API + '?' + params.toString());
+      }
       done++;
     } catch(e) {
+      console.error('Upload error:', e);
       showToast('❌ Erro ao enviar ' + file.name);
     }
   }
