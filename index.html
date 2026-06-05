@@ -384,12 +384,11 @@
   </div>
   <div class="drawer-body">
     <div id="anex-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:600;margin-bottom:4px"></div>
-    <div id="anex-files-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:250px;overflow-y:auto"></div>
-    <div class="field">
-      <label>Adicionar arquivo(s)</label>
-      <input type="file" id="anex-file-input" multiple accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif" style="padding:8px;border:1.5px dashed var(--border);border-radius:var(--radius-sm);background:var(--bg);width:100%">
+    <div id="anex-files-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;max-height:300px;overflow-y:auto"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-primary" onclick="uploadAnexo()" id="anex-upload-btn" style="flex:1">📂 Abrir pasta no Drive</button>
+      <button onclick="loadAnexos()" style="background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;font-size:14px" title="Atualizar lista">🔄</button>
     </div>
-    <button class="btn-primary" onclick="uploadAnexo()" id="anex-upload-btn">📤 Enviar arquivo(s)</button>
     <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Arquivos salvos no Google Drive — Prospecções Renner</div>
     <div style="height:8px"></div>
   </div>
@@ -1353,60 +1352,37 @@ function renderAnexos(files) {
     return;
   }
   el.innerHTML = files.map(f => `
-    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);display:flex;align-items:center;gap:10px">
-      <span style="font-size:20px">${fileIcon(f.mimeType)}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.fileName}</div>
-        <div style="font-size:11px;color:var(--muted)">${f.date}</div>
+    <div style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">${fileIcon(f.mimeType)}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.fileName}</div>
+          <div style="font-size:11px;color:var(--muted)">${f.date}</div>
+        </div>
       </div>
-      <div style="display:flex;gap:6px;flex-shrink:0">
-        <a href="${f.viewUrl}" target="_blank" style="background:var(--accent-light);color:var(--accent);border:none;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:600;text-decoration:none">Abrir</a>
-        <button onclick="deletarAnexo('${f.fileId}')" style="background:var(--red-light);color:var(--red);border:none;border-radius:4px;padding:5px 10px;font-size:12px;font-weight:600;cursor:pointer">🗑️</button>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <a href="${f.viewUrl}" target="_blank" style="flex:1;background:var(--accent-light);color:var(--accent);border:none;border-radius:4px;padding:6px;font-size:12px;font-weight:600;text-decoration:none;text-align:center">👁️ Abrir</a>
+        <a href="https://wa.me/?text=${encodeURIComponent('Arquivo: ' + f.fileName + ' — ' + f.viewUrl)}" target="_blank" style="flex:1;background:#E8F8EE;color:#1E7B3E;border:none;border-radius:4px;padding:6px;font-size:12px;font-weight:600;text-decoration:none;text-align:center">💬 WhatsApp</a>
+        <button onclick="deletarAnexo('${f.fileId}')" style="flex:1;background:var(--red-light);color:var(--red);border:none;border-radius:4px;padding:6px;font-size:12px;font-weight:600;cursor:pointer">🗑️ Apagar</button>
       </div>
     </div>`).join('');
 }
 
 async function uploadAnexo() {
   if (!anexClient) return;
-  const input = document.getElementById('anex-file-input');
-  if (!input.files.length) { showToast('⚠️ Selecione um arquivo'); return; }
-
-  const btn = document.getElementById('anex-upload-btn');
-  btn.textContent = '⏳ Enviando...';
-  btn.disabled = true;
-
-  let successCount = 0;
-  for (const file of input.files) {
-    try {
-      const base64 = await fileToBase64(file);
-      const params = {
-        action: 'uploadFile',
-        clienteName: anexClient.cliente,
-        fileName: file.name,
-        mimeType: file.type || 'application/octet-stream',
-        fileData: base64,
-      };
-      await postData(params);
-      successCount++;
-    } catch(e) {
-      console.error('Upload error:', e);
+  // Get or create client folder URL and open Drive
+  showToast('⏳ Criando pasta...');
+  try {
+    const params = new URLSearchParams({ action: 'getOrCreateFolder', clienteName: anexClient.cliente });
+    const data = await jsonp(API + '?' + params.toString());
+    if (data.folderUrl) {
+      window.open(data.folderUrl, '_blank');
+      showToast('📂 Pasta aberta no Drive — faça o upload e volte aqui');
+      setTimeout(() => loadAnexos(), 3000);
     }
+  } catch(e) {
+    showToast('❌ Erro ao abrir pasta');
   }
-
-  btn.textContent = '📤 Enviar arquivo(s)';
-  btn.disabled = false;
-  input.value = '';
-  showToast(`✅ ${successCount} arquivo(s) enviado(s)!`);
-  loadAnexos();
-}
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result.split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 async function deletarAnexo(fileId) {
