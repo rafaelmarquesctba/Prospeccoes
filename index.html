@@ -1370,18 +1370,24 @@ function renderAnexos(files) {
 
 async function uploadAnexo() {
   if (!anexClient) return;
-  // Get or create client folder URL and open Drive
   showToast('⏳ Criando pasta...');
   try {
     const params = new URLSearchParams({ action: 'getOrCreateFolder', clienteName: anexClient.cliente });
     const data = await jsonp(API + '?' + params.toString());
     if (data.folderUrl) {
-      window.open(data.folderUrl, '_blank');
-      showToast('📂 Pasta aberta no Drive — faça o upload e volte aqui');
-      setTimeout(() => loadAnexos(), 3000);
+      // Use anchor click to bypass popup blocker
+      const a = document.createElement('a');
+      a.href = data.folderUrl;
+      a.target = '_blank';
+      a.rel = 'noopener';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast('📂 Pasta aberta — faça o upload e clique em 🔄');
+      setTimeout(() => loadAnexos(), 5000);
     }
   } catch(e) {
-    showToast('❌ Erro ao abrir pasta');
+    showToast('❌ Erro ao abrir pasta: ' + e.message);
   }
 }
 
