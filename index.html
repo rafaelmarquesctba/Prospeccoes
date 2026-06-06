@@ -427,12 +427,37 @@ window.addEventListener('offline', () => { isOnline = false; document.getElement
 if (!isOnline) document.getElementById('offlineBar').classList.add('show');
 
 // --- JSONP helper (bypasses CORS for GET) ---
-function jsonp(url) {
+function jsonp(url, timeout=15000) {
   return new Promise((resolve, reject) => {
-    const cb = 'cb_' + Date.now();
+    const cb = 'cb_' + Date.now() + '_' + Math.floor(Math.random()*10000);
     const script = document.createElement('script');
-    window[cb] = (data) => { resolve(data); delete window[cb]; script.remove(); };
-    script.onerror = () => { reject(new Error('JSONP error')); delete window[cb]; script.remove(); };
+    let done = false;
+    const timer = setTimeout(() => {
+      if (!done) {
+        done = true;
+        delete window[cb];
+        script.remove();
+        reject(new Error('JSONP timeout'));
+      }
+    }, timeout);
+    window[cb] = (data) => {
+      if (!done) {
+        done = true;
+        clearTimeout(timer);
+        delete window[cb];
+        script.remove();
+        resolve(data);
+      }
+    };
+    script.onerror = () => {
+      if (!done) {
+        done = true;
+        clearTimeout(timer);
+        delete window[cb];
+        script.remove();
+        reject(new Error('JSONP error'));
+      }
+    };
     script.src = url + '&callback=' + cb;
     document.head.appendChild(script);
   });
@@ -1342,8 +1367,8 @@ async function loadAnexos() {
     const data = await jsonp(API + '?' + params.toString());
     renderAnexos(data.files || []);
   } catch(e) {
-    console.error('loadAnexos error:', e);
-    if (el) el.innerHTML = '<div style="font-size:13px;color:var(--red);text-align:center;padding:12px">❌ Erro ao carregar arquivos</div>';
+    console.error('loadAnexos error:', e.message);
+    if (el) el.innerHTML = '<div style="font-size:13px;color:var(--red);text-align:center;padding:12px">❌ ' + e.message + ' — tente novamente</div>';
   }
 }
 
