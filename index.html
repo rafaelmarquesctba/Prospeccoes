@@ -384,8 +384,8 @@
   </div>
   <div class="drawer-body">
     <div id="anex-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
-    <button class="btn-primary" onclick="uploadAnexo()" style="width:100%;margin-bottom:10px">📤 Enviar arquivo</button>
-    <button onclick="uploadAnexoDrive()" style="width:100%;background:#E8F0FE;color:#1A3FAA;border:1.5px solid #1A3FAA;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <button id="anex-btn-upload" class="btn-primary" style="width:100%;margin-bottom:10px">📤 Enviar arquivo</button>
+    <button id="anex-btn-drive" style="width:100%;background:#E8F0FE;color:#1A3FAA;border:1.5px solid #1A3FAA;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
       <span style="font-size:18px">📂</span> Ver arquivos no Google Drive
     </button>
     <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.6">
@@ -1334,6 +1334,41 @@ function openAnexModal(rowIndex) {
   if (!anexClient) return;
 
   document.getElementById('anex-client-info').textContent = anexClient.cliente;
+
+  // Set buttons with client name directly to avoid null reference
+  const clientName = encodeURIComponent(anexClient.cliente);
+  const formUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSfzJbNr3sgLvS4tVKOlZSsGom8_kxAy9npVmTGolLgiM9p4FQ/viewform?usp=pp_url&entry.1759910177=' + clientName;
+
+  document.getElementById('anex-btn-upload').onclick = function() {
+    const a = document.createElement('a');
+    a.href = formUrl;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('📋 Formulário aberto — anexe o arquivo e envie');
+  };
+
+  document.getElementById('anex-btn-drive').onclick = async function() {
+    showToast('⏳ Abrindo Drive...');
+    try {
+      const params = new URLSearchParams({ action: 'getOrCreateFolder', clienteName: anexClient.cliente });
+      const data = await jsonp(API + '?' + params.toString());
+      if (data.folderUrl) {
+        const a = document.createElement('a');
+        a.href = data.folderUrl;
+        a.target = '_blank';
+        a.rel = 'noopener';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        showToast('📂 Pasta aberta no Drive!');
+      }
+    } catch(e) {
+      showToast('❌ Erro ao abrir Drive');
+    }
+  };
 
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('drawer').classList.remove('open');
