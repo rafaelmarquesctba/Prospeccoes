@@ -800,13 +800,13 @@ let editStatus = null;
 function selectEditStatus(s, el) {
   editStatus = s;
   document.querySelectorAll('#edit-status-grid .status-pill').forEach(p => p.className = 'status-pill');
-  el.className = `status-pill sel-${s}`;
+  el.className = 'status-pill sel-' + s;
 }
 
 function selectNewStatus(s, el) {
   newStatus = s;
   document.querySelectorAll('#new-status-grid .status-pill').forEach(p => p.className = 'status-pill');
-  el.className = `status-pill sel-${s}`;
+  el.className = 'status-pill sel-' + s;
 }
 
 function closeDrawer() {
