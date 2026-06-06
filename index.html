@@ -987,12 +987,19 @@ function renderDashboard() {
     const count = statusCount[s];
     const pct = Math.round((count / maxStatus) * 100);
     return `<div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;cursor:pointer" onclick="toggleFunilClientes('${s}')">
         <span style="font-weight:500">${s}</span>
-        <span style="font-weight:700;color:${statusColors[s]}">${count}</span>
+        <span style="font-weight:700;color:${statusColors[s]}">${count} <span style="font-size:11px;opacity:.6">▼</span></span>
       </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
+      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden;cursor:pointer" onclick="toggleFunilClientes('${s}')">
         <div style="width:${pct}%;height:100%;background:${statusColors[s]};border-radius:4px;transition:width .5s"></div>
+      </div>
+      <div id="funil-list-${s.replace(/ /g,'_')}" style="display:none;margin-top:8px;background:var(--bg);border-radius:var(--radius-sm);padding:8px;max-height:180px;overflow-y:auto">
+        ${allClients.filter(c => c.status === s).map(c => `
+          <div style="font-size:12px;padding:4px 6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+            <span style="font-weight:500">${c.cliente}</span>
+            <span style="color:var(--muted);font-size:11px">${c.cidade || ''}</span>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Nenhum cliente</div>'}
       </div>
     </div>`;
   }).join('');
@@ -1537,6 +1544,19 @@ async function criarLembrete() {
   }
 }
 
+
+
+// --- FUNIL TOGGLE ---
+function toggleFunilClientes(status) {
+  const id = 'funil-list-' + status.replace(/ /g, '_');
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  // Close all
+  document.querySelectorAll('[id^="funil-list-"]').forEach(e => e.style.display = 'none');
+  // Toggle clicked
+  if (!isOpen) el.style.display = 'block';
+}
 
 // --- DASHBOARD CALENDAR ---
 let calDashMes = new Date().getMonth();
