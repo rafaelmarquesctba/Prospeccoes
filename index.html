@@ -1351,26 +1351,6 @@ function openAnexModal(rowIndex) {
     showToast('📋 Formulário aberto — anexe o arquivo e envie');
   };
 
-  document.getElementById('anex-btn-drive').onclick = async function() {
-    showToast('⏳ Abrindo Drive...');
-    try {
-      const params = new URLSearchParams({ action: 'getOrCreateFolder', clienteName: anexClient.cliente });
-      const data = await jsonp(API + '?' + params.toString());
-      if (data.folderUrl) {
-        const a = document.createElement('a');
-        a.href = data.folderUrl;
-        a.target = '_blank';
-        a.rel = 'noopener';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        showToast('📂 Pasta aberta no Drive!');
-      }
-    } catch(e) {
-      showToast('❌ Erro ao abrir Drive');
-    }
-  };
-
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('drawer').classList.remove('open');
 
