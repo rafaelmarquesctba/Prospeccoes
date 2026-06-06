@@ -383,14 +383,15 @@
     <button class="close-btn" onclick="closeAnexModal()">✕</button>
   </div>
   <div class="drawer-body">
-    <div id="anex-client-info" style="background:var(--bg);border-radius:var(--radius-sm);padding:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
-    <button id="anex-btn-upload" class="btn-primary" style="width:100%;margin-bottom:10px">📤 Enviar arquivo</button>
-    <button id="anex-btn-drive" style="width:100%;background:#E8F0FE;color:#1A3FAA;border:1.5px solid #1A3FAA;padding:13px;border-radius:var(--radius-sm);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
-      <span style="font-size:18px">📂</span> Ver arquivos no Google Drive
-    </button>
-    <div style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center;line-height:1.6">
-      📤 Abre formulário para fazer upload<br>
-      📂 Abre a pasta do cliente no Drive
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div id="anex-client-info" style="font-size:13px;font-weight:600;color:var(--text)"></div>
+      <button id="anex-btn-upload" class="btn-primary" style="padding:8px 14px;font-size:13px">📤 Enviar arquivo</button>
+    </div>
+    <div id="anex-drive-frame" style="border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border);background:var(--bg);min-height:300px;display:flex;align-items:center;justify-content:center">
+      <div style="font-size:13px;color:var(--muted)">⏳ Carregando arquivos...</div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">
+      📤 Envia arquivo via formulário · Arquivos salvos no Google Drive
     </div>
     <div style="height:8px"></div>
   </div>
@@ -1373,9 +1374,24 @@ function openAnexModal(rowIndex) {
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('drawer').classList.remove('open');
 
-  setTimeout(() => {
+  setTimeout(async () => {
     document.getElementById('anexOverlay').classList.add('show');
     document.getElementById('anexDrawer').classList.add('open');
+
+    // Load Drive folder in iframe
+    const frameDiv = document.getElementById('anex-drive-frame');
+    frameDiv.innerHTML = '<div style="font-size:13px;color:var(--muted)">⏳ Carregando pasta...</div>';
+
+    try {
+      const params = new URLSearchParams({ action: 'getOrCreateFolder', clienteName: anexClient.cliente });
+      const data = await jsonp(API + '?' + params.toString());
+      if (data.folderId) {
+        const embedUrl = 'https://drive.google.com/embeddedfolderview?id=' + data.folderId + '#list';
+        frameDiv.innerHTML = '<iframe src="' + embedUrl + '" style="width:100%;height:320px;border:none" frameborder="0"></iframe>';
+      }
+    } catch(e) {
+      frameDiv.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:20px;text-align:center">❌ Erro ao carregar arquivos</div>';
+    }
   }, 200);
 }
 
