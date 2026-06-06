@@ -106,6 +106,7 @@
   .status-pill.sel-DECLINOU { background: var(--gray-light); border-color: #aaa; color: #555; }
   .status-pill.sel-TIME\ DE\ OBRA { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
   .status-pill.sel-TESTE\ DE\ PRODUTO { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+  .status-pill.sel-INADIMPLENTE { background: var(--red-light); border-color: var(--red); color: var(--red); }
 
   /* BUTTONS */
   .btn-primary { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
@@ -300,6 +301,7 @@
           <div class="status-pill" onclick="selectNewStatus('VENDA REALIZADA',this)">VENDA REALIZADA</div>
           <div class="status-pill" onclick="selectNewStatus('TIME DE OBRA',this)">TIME DE OBRA</div>
           <div class="status-pill" onclick="selectNewStatus('DECLINOU',this)">DECLINOU</div>
+          <div class="status-pill" onclick="selectNewStatus('INADIMPLENTE',this)">INADIMPLENTE</div>
           <div class="status-pill" onclick="selectNewStatus('TESTE DE PRODUTO',this)">TESTE DE PRODUTO</div>
         </div>
       </div>
@@ -531,7 +533,7 @@ function alertDot(d, status) {
 }
 
 function statusBadge(s) {
-  const map = { 'PROSPECÇÃO':'badge-blue','CADASTRO':'badge-amber','COTAÇÃO':'badge-amber','VENDA REALIZADA':'badge-green','TIME DE OBRA':'badge-green','TESTE DE PRODUTO':'badge-amber','DECLINOU':'badge-gray' };
+  const map = { 'PROSPECÇÃO':'badge-blue','CADASTRO':'badge-amber','COTAÇÃO':'badge-amber','VENDA REALIZADA':'badge-green','TIME DE OBRA':'badge-green','TESTE DE PRODUTO':'badge-amber','INADIMPLENTE':'badge-red','DECLINOU':'badge-gray' };
   return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
 }
 
@@ -659,6 +661,7 @@ function openClient(rowIndex) {
         <div class="status-pill ${c.status === 'VENDA REALIZADA' ? 'sel-VENDA\\ REALIZADA' : ''}" onclick="selectEditStatus('VENDA REALIZADA',this)">VENDA REALIZADA</div>
         <div class="status-pill ${c.status === 'TIME DE OBRA' ? 'sel-TIME\\ DE\\ OBRA' : ''}" onclick="selectEditStatus('TIME DE OBRA',this)">TIME DE OBRA</div>
         <div class="status-pill ${c.status === 'DECLINOU' ? 'sel-DECLINOU' : ''}" onclick="selectEditStatus('DECLINOU',this)">DECLINOU</div>
+        <div class="status-pill ${c.status === 'INADIMPLENTE' ? 'sel-INADIMPLENTE' : ''}" onclick="selectEditStatus('INADIMPLENTE',this)">INADIMPLENTE</div>
         <div class="status-pill ${c.status === 'TESTE DE PRODUTO' ? 'sel-TESTE\\ DE\\ PRODUTO' : ''}" onclick="selectEditStatus('TESTE DE PRODUTO',this)">TESTE DE PRODUTO</div>
       </div>
     </div>
@@ -977,8 +980,8 @@ function renderDashboard() {
   `;
 
   // --- Funil de status ---
-  const statusOrder = ['PROSPECÇÃO','CADASTRO','COTAÇÃO','TESTE DE PRODUTO','TIME DE OBRA','VENDA REALIZADA','DECLINOU'];
-  const statusColors = {'PROSPECÇÃO':'#1A3FAA','CADASTRO':'#C97A00','COTAÇÃO':'#C97A00','TIME DE OBRA':'#639922','TESTE DE PRODUTO':'#C97A00','VENDA REALIZADA':'#1E7B3E','DECLINOU':'#aaa'};
+  const statusOrder = ['PROSPECÇÃO','CADASTRO','COTAÇÃO','TESTE DE PRODUTO','TIME DE OBRA','VENDA REALIZADA','INADIMPLENTE','DECLINOU'];
+  const statusColors = {'PROSPECÇÃO':'#1A3FAA','CADASTRO':'#C97A00','COTAÇÃO':'#C97A00','TIME DE OBRA':'#639922','TESTE DE PRODUTO':'#C97A00','VENDA REALIZADA':'#1E7B3E','INADIMPLENTE':'#D63030','DECLINOU':'#aaa'};
   const statusCount = {};
   statusOrder.forEach(s => statusCount[s] = 0);
   allClients.forEach(c => { if (c.status && statusCount[c.status] !== undefined) statusCount[c.status]++; });
