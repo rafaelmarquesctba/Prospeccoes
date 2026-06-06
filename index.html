@@ -1724,3 +1724,34 @@ updatePendingBadge();
 </script>
 </body>
 </html>
+function onFormSubmit(e) {
+  try {
+    const responses = e.values;
+    const clienteName = responses[1]; // Nome do cliente
+    const fileUrl = responses[2]; // URL do arquivo
+    
+    if (!fileUrl || !clienteName) return;
+    
+    // Extract file ID
+    const match = fileUrl.match(/[-\w]{25,}/);
+    if (!match) return;
+    const fileId = match[0];
+    
+    // Get or create client folder
+    const rootFolder = DriveApp.getFolderById('1rHe4xpMWouZ8E3wo-sca0XGZV842NAz8');
+    let clientFolder;
+    const folders = rootFolder.getFoldersByName(clienteName);
+    if (folders.hasNext()) {
+      clientFolder = folders.next();
+    } else {
+      clientFolder = rootFolder.createFolder(clienteName);
+    }
+    
+    // Move file to client folder
+    const file = DriveApp.getFileById(fileId);
+    file.moveTo(clientFolder);
+    
+  } catch(e) {
+    Logger.log('Erro: ' + e.toString());
+  }
+}
