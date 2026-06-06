@@ -1334,8 +1334,6 @@ function openAnexModal(rowIndex) {
   if (!anexClient) return;
 
   document.getElementById('anex-client-info').textContent = anexClient.cliente;
-  // file input removed - Drive-based upload
-  document.getElementById('anex-files-list').innerHTML = '<div style="font-size:13px;color:var(--muted);text-align:center;padding:8px">Carregando arquivos...</div>';
 
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('drawer').classList.remove('open');
@@ -1343,7 +1341,6 @@ function openAnexModal(rowIndex) {
   setTimeout(() => {
     document.getElementById('anexOverlay').classList.add('show');
     document.getElementById('anexDrawer').classList.add('open');
-    loadAnexos();
   }, 200);
 }
 
