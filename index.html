@@ -476,15 +476,36 @@ function postData(payload) {
 }
 
 // --- INIT ---
+const CACHE_VERSION = 'v3';
+const CACHE_VER_KEY = 'prospecoes_cache_version';
+
 window.addEventListener('DOMContentLoaded', () => {
   // Reset all filters on load
   filterStatus = '';
   filterCidade = '';
   filterCategoria = '';
   filterFase = '';
-  filterFase = '';
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached) { allClients = JSON.parse(cached); renderList(); updateCount(); }
+
+  // Clear outdated or corrupted cache
+  const cacheVer = localStorage.getItem(CACHE_VER_KEY);
+  if (cacheVer !== CACHE_VERSION) {
+    localStorage.removeItem(CACHE_KEY);
+    localStorage.setItem(CACHE_VER_KEY, CACHE_VERSION);
+  }
+
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        allClients = parsed;
+        renderList();
+        updateCount();
+      }
+    }
+  } catch(e) {
+    localStorage.removeItem(CACHE_KEY);
+  }
   loadFromServer();
   setToday();
 });
