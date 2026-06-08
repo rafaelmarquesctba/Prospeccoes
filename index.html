@@ -8,33 +8,33 @@
 <title>Prospecções — Renner</title>
 <style>
   :root {
-    --bg: #F5F4F0;
+    --bg: #FDF5F5;
     --surface: #FFFFFF;
     --border: rgba(0,0,0,0.09);
     --text: #1A1A1A;
     --muted: #888;
-    --accent: #1A3FAA;
-    --accent-light: #E8EDFF;
-    --red: #D63030;
-    --red-light: #FFF0F0;
+    --accent: #C8102E;
+    --accent-light: #FDEAED;
+    --accent-dark: #9E0C24;
+    --gold: #C9A84C;
+    --gold-light: #FBF4E3;
+    --red: #C8102E;
+    --red-light: #FDEAED;
     --amber: #C97A00;
     --amber-light: #FFF8E6;
     --green: #1E7B3E;
     --green-light: #EDFAF3;
-    --gray-light: #F1EFE8;
+    --gray-light: #F5F0F0;
     --radius: 14px;
     --radius-sm: 8px;
-    --shadow: 0 2px 12px rgba(0,0,0,0.07);
+    --shadow: 0 2px 12px rgba(200,16,46,0.08);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 80px; }
 
   /* TOP BAR */
-  .topbar { background: var(--accent); color: #fff; padding: 16px 20px 12px; position: sticky; top: 0; z-index: 100; }
-  .topbar-inner { display: flex; align-items: center; justify-content: space-between; }
-  .topbar h1 { font-size: 17px; font-weight: 600; letter-spacing: -0.3px; }
-  .topbar span { font-size: 12px; opacity: 0.7; }
-  .sync-btn { background: rgba(255,255,255,0.15); border: none; color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
+  .topbar { background: var(--accent); color: #fff; position: sticky; top: 0; z-index: 100; border-bottom: 3px solid var(--gold); position:relative; }
+  .sync-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(201,168,76,0.4); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 5px; }
   .sync-btn:active { background: rgba(255,255,255,0.25); }
   .offline-bar { background: var(--amber); color: #fff; text-align: center; font-size: 12px; padding: 5px; display: none; }
   .offline-bar.show { display: block; }
@@ -49,7 +49,7 @@
   /* TABS */
   .tabs { display: flex; padding: 0 16px; gap: 6px; margin-bottom: 4px; }
   .tab { flex: 1; padding: 9px 4px; border: none; background: transparent; font-size: 13px; color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent; font-weight: 500; }
-  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
 
   /* CARDS */
   .list { padding: 8px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -74,7 +74,8 @@
   /* BOTTOM NAV */
   .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
   .nav-btn { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 4px 8px; border: none; background: transparent; cursor: pointer; color: var(--muted); font-size: 11px; gap: 3px; }
-  .nav-btn.active { color: var(--accent); }
+  .nav-btn.active { color: var(--accent); font-weight: 600; }
+  .nav-btn.active .nav-icon { color: var(--accent); }
   .nav-icon { font-size: 22px; }
 
   /* DRAWER / FORM */
@@ -83,8 +84,8 @@
   .drawer { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-radius: 20px 20px 0 0; z-index: 201; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform .3s cubic-bezier(.32,.72,0,1); padding-bottom: env(safe-area-inset-bottom); }
   .drawer.open { transform: translateY(0); }
   .drawer-handle { width: 36px; height: 4px; background: #ddd; border-radius: 2px; margin: 12px auto 0; }
-  .drawer-header { padding: 12px 20px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
-  .drawer-title { font-size: 17px; font-weight: 700; }
+  .drawer-header { padding: 12px 20px 16px; border-bottom: 2px solid var(--accent); display: flex; align-items: center; justify-content: space-between; }
+  .drawer-title { font-size: 17px; font-weight: 700; color: var(--accent); }
   .close-btn { width: 30px; height: 30px; border-radius: 50%; background: var(--gray-light); border: none; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; }
   .drawer-body { padding: 16px 20px; display: flex; flex-direction: column; gap: 14px; }
 
@@ -109,7 +110,8 @@
   .status-pill.sel-INADIMPLENTE { background: var(--red-light); border-color: var(--red); color: var(--red); }
 
   /* BUTTONS */
-  .btn-primary { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; }
+  .btn-primary { background: var(--accent); color: #fff; border: none; padding: 15px; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; cursor: pointer; width: 100%; letter-spacing: .3px; }
+  .btn-primary:hover { background: var(--accent-dark); }
   .btn-primary:active { opacity: .85; }
   .btn-wpp { background: #25D366; color: #fff; border: none; padding: 13px; border-radius: var(--radius-sm); font-size: 15px; font-weight: 600; cursor: pointer; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; }
   .btn-wpp:active { opacity: .85; }
@@ -139,11 +141,15 @@
 <div class="offline-bar" id="offlineBar">📡 Sem conexão — alterações salvas localmente</div>
 
 <div class="topbar">
-  <div class="topbar-inner">
-    <div>
-      <h1>Prospecções Renner</h1>
-      <span id="countLabel">Carregando...</span>
+  <div style="display:flex;flex-direction:column;align-items:center;padding:16px 20px 12px;text-align:center">
+    <div style="width:72px;height:72px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.2);overflow:hidden;border:3px solid var(--gold)">
+      <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQ_zwsw9Z3lgCkHC-CHEQBM8IOF6ASILX_xmg&s" style="width:100%;height:100%;object-fit:cover" alt="Tintas Renner">
     </div>
+    <h1 style="font-size:20px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin:0">TINTAS RENNER</h1>
+    <div style="font-size:12px;opacity:0.8;letter-spacing:.5px;margin-top:2px">Controle de Prospecções</div>
+    <div style="font-size:11px;opacity:0.65;margin-top:2px" id="countLabel">Carregando...</div>
+  </div>
+  <div style="position:absolute;top:12px;right:16px">
     <button class="sync-btn" onclick="syncPending()">⇅ Sincronizar</button>
   </div>
 </div>
