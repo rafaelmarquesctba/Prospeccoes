@@ -184,6 +184,10 @@
       <option value="ACABAMENTO">ACABAMENTO</option>
     </select>
   </div>
+  <div id="urgenciaFilterBadge" style="display:none;margin:0 16px 10px;padding:8px 12px;background:var(--accent-light,#EEF1FB);border-radius:var(--radius-sm);align-items:center;justify-content:space-between;font-size:13px;font-weight:600;color:var(--accent)">
+    <span id="urgenciaFilterLabel"></span>
+    <button onclick="clearFilterUrgencia()" style="background:none;border:none;color:var(--accent);font-size:16px;cursor:pointer;line-height:1;padding:0 4px">✕</button>
+  </div>
   <div class="list" id="clientList"></div>
 </div>
 
@@ -425,6 +429,7 @@ const PENDING_KEY = 'prospecoes_pending';
 
 let allClients = [];
 let currentTab = 'todos';
+let filterUrgencia = '';
 let newStatus = 'PROSPECÇÃO';
 let currentClient = null;
 let isOnline = navigator.onLine;
@@ -491,6 +496,7 @@ window.addEventListener('DOMContentLoaded', () => {
   filterCidade = '';
   filterCategoria = '';
   filterFase = '';
+  filterUrgencia = '';
 
   // Clear outdated or corrupted cache
   const cacheVer = localStorage.getItem(CACHE_VER_KEY);
@@ -564,11 +570,33 @@ function statusBadge(s) {
   return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
 }
 
+const URG_LABELS = { urgente: '🔴 Urgente (+90d)', atencao: '🟡 Atenção (30-90d)', emdia: '🟢 Em dia (-30d)', semdata: '⚪ Sem data' };
+
+function clearFilterUrgencia() {
+  filterUrgencia = '';
+  renderList();
+}
+
 function renderList() {
   const q = document.getElementById('searchInput').value.toLowerCase();
   let list = [...allClients];
   if (filterCategoria) list = list.filter(c => (c.categoria || '') === filterCategoria);
   if (filterFase) list = list.filter(c => (c.fase || '') === filterFase);
+
+  if (filterUrgencia === 'urgente') list = list.filter(c => { const d = dias(c.ultimoContato); return d !== null && d >= 90 && c.status !== 'DECLINOU'; });
+  if (filterUrgencia === 'atencao') list = list.filter(c => { const d = dias(c.ultimoContato); return d !== null && d >= 30 && d < 90 && c.status !== 'DECLINOU'; });
+  if (filterUrgencia === 'emdia') list = list.filter(c => { const d = dias(c.ultimoContato); return d !== null && d < 30 && c.status !== 'DECLINOU'; });
+  if (filterUrgencia === 'semdata') list = list.filter(c => !c.ultimoContato && c.status !== 'DECLINOU');
+
+  const badge = document.getElementById('urgenciaFilterBadge');
+  if (badge) {
+    if (filterUrgencia) {
+      badge.style.display = 'flex';
+      document.getElementById('urgenciaFilterLabel').textContent = 'Filtro do dashboard: ' + URG_LABELS[filterUrgencia];
+    } else {
+      badge.style.display = 'none';
+    }
+  }
 
   if (q) list = list.filter(c =>
     c.cliente.toLowerCase().includes(q) ||
@@ -630,6 +658,7 @@ function updateCount() {
 // --- TABS ---
 function setTab(tab, el) {
   currentTab = tab;
+  filterUrgencia = '';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderList();
@@ -1035,25 +1064,33 @@ function renderDashboard() {
   }).join('');
 
   // --- Urgência ---
-  const urg = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 90; }).length;
-  const atenc = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 30 && d < 90; }).length;
-  const emDia = ativos.filter(c => { const d = dias(c.ultimoContato); return d !== null && d < 30; }).length;
-  const semData = ativos.filter(c => !c.ultimoContato).length;
+  const urgList = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 90; });
+  const atencList = ativos.filter(c => { const d = dias(c.ultimoContato); return d && d >= 30 && d < 90; });
+  const emDiaList = ativos.filter(c => { const d = dias(c.ultimoContato); return d !== null && d < 30; });
+  const semDataList = ativos.filter(c => !c.ultimoContato);
   const urgData = [
-    { label: '🔴 Urgente (+90d)', count: urg, color: '#E24B4A', bg: '#FFD7D7' },
-    { label: '🟡 Atenção (30-90d)', count: atenc, color: '#C97A00', bg: '#FFF3CD' },
-    { label: '🟢 Em dia (-30d)', count: emDia, color: '#1E7B3E', bg: '#D4EDDA' },
-    { label: '⚪ Sem data', count: semData, color: '#888', bg: '#F1EFE8' },
+    { key: 'urgente', label: '🔴 Urgente (+90d)', count: urgList.length, list: urgList, color: '#E24B4A' },
+    { key: 'atencao', label: '🟡 Atenção (30-90d)', count: atencList.length, list: atencList, color: '#C97A00' },
+    { key: 'emdia', label: '🟢 Em dia (-30d)', count: emDiaList.length, list: emDiaList, color: '#1E7B3E' },
+    { key: 'semdata', label: '⚪ Sem data', count: semDataList.length, list: semDataList, color: '#888' },
   ];
   const maxUrg = Math.max(...urgData.map(u => u.count), 1);
   document.getElementById('dash-urgencia').innerHTML = urgData.map(u => `
     <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;cursor:pointer" onclick="toggleUrgenciaClientes('${u.key}')">
         <span>${u.label}</span>
-        <span style="font-weight:700;color:${u.color}">${u.count}</span>
+        <span style="font-weight:700;color:${u.color}">${u.count} <span style="font-size:11px;opacity:.6">▼</span></span>
       </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
+      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden;cursor:pointer" onclick="toggleUrgenciaClientes('${u.key}')">
         <div style="width:${Math.round((u.count/maxUrg)*100)}%;height:100%;background:${u.color};border-radius:4px;transition:width .5s"></div>
+      </div>
+      <div id="urg-list-${u.key}" style="display:none;margin-top:8px;background:var(--bg);border-radius:var(--radius-sm);padding:8px;max-height:220px;overflow-y:auto">
+        ${u.list.map(c => `
+          <div style="font-size:12px;padding:4px 6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="event.stopPropagation();openClient(${c.rowIndex})">
+            <span style="font-weight:500">${c.cliente}</span>
+            <span style="color:var(--muted);font-size:11px">${c.cidade || ''}</span>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Nenhum cliente</div>'}
+        ${u.count ? `<div style="text-align:center;margin-top:8px"><button style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();verNaListaUrgencia('${u.key}')">Ver na lista completa →</button></div>` : ''}
       </div>
     </div>`).join('');
 
@@ -1586,6 +1623,27 @@ function toggleFunilClientes(status) {
   document.querySelectorAll('[id^="funil-list-"]').forEach(e => e.style.display = 'none');
   // Toggle clicked
   if (!isOpen) el.style.display = 'block';
+}
+
+function toggleUrgenciaClientes(key) {
+  const id = 'urg-list-' + key;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  // Close all
+  document.querySelectorAll('[id^="urg-list-"]').forEach(e => e.style.display = 'none');
+  // Toggle clicked
+  if (!isOpen) el.style.display = 'block';
+}
+
+function verNaListaUrgencia(key) {
+  filterUrgencia = key;
+  currentTab = 'todos';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const primeiraTab = document.querySelector('.tab');
+  if (primeiraTab) primeiraTab.classList.add('active');
+  showSection('lista');
+  renderList();
 }
 
 // --- DASHBOARD CALENDAR ---
