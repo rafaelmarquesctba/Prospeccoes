@@ -430,6 +430,8 @@ const PENDING_KEY = 'prospecoes_pending';
 let allClients = [];
 let currentTab = 'todos';
 let filterUrgencia = '';
+let filterOrigem = '';
+let dashOrigemGroups = [];
 let newStatus = 'PROSPECÇÃO';
 let currentClient = null;
 let isOnline = navigator.onLine;
@@ -497,6 +499,7 @@ window.addEventListener('DOMContentLoaded', () => {
   filterCategoria = '';
   filterFase = '';
   filterUrgencia = '';
+  filterOrigem = '';
 
   // Clear outdated or corrupted cache
   const cacheVer = localStorage.getItem(CACHE_VER_KEY);
@@ -574,6 +577,7 @@ const URG_LABELS = { urgente: '🔴 Urgente (+90d)', atencao: '🟡 Atenção (3
 
 function clearFilterUrgencia() {
   filterUrgencia = '';
+  filterOrigem = '';
   renderList();
 }
 
@@ -588,11 +592,16 @@ function renderList() {
   if (filterUrgencia === 'emdia') list = list.filter(c => { const d = dias(c.ultimoContato); return d !== null && d < 30 && c.status !== 'DECLINOU'; });
   if (filterUrgencia === 'semdata') list = list.filter(c => !c.ultimoContato && c.status !== 'DECLINOU');
 
+  if (filterOrigem) list = list.filter(c => (c.infoVia || 'Não informado') === filterOrigem);
+
   const badge = document.getElementById('urgenciaFilterBadge');
   if (badge) {
     if (filterUrgencia) {
       badge.style.display = 'flex';
       document.getElementById('urgenciaFilterLabel').textContent = 'Filtro do dashboard: ' + URG_LABELS[filterUrgencia];
+    } else if (filterOrigem) {
+      badge.style.display = 'flex';
+      document.getElementById('urgenciaFilterLabel').textContent = 'Filtro do dashboard: Origem — ' + filterOrigem;
     } else {
       badge.style.display = 'none';
     }
@@ -659,6 +668,7 @@ function updateCount() {
 function setTab(tab, el) {
   currentTab = tab;
   filterUrgencia = '';
+  filterOrigem = '';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
   renderList();
@@ -708,6 +718,10 @@ function openClient(rowIndex) {
     </div>
 
     <div style="font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">Atualizar registro</div>
+
+    <div class="field"><label>Nome do cliente/empresa</label>
+      <input type="text" id="edit-nome-cliente" value="${c.cliente || ''}">
+    </div>
 
     <div class="field"><label>Novo status</label>
       <div class="status-grid" id="edit-status-grid">
@@ -877,6 +891,9 @@ async function salvarEdicao() {
   if (!currentClient) return;
   const c = currentClient;
 
+  const nomeClienteEditado = document.getElementById('edit-nome-cliente').value.trim();
+  if (!nomeClienteEditado) { showToast('⚠️ O nome do cliente não pode ficar em branco'); return; }
+
   const ultimoRaw = document.getElementById('edit-ultimo').value;
   const ultimoFmt = ultimoRaw ? ultimoRaw.split('-').reverse().join('/') : c.ultimoContato;
 
@@ -895,6 +912,7 @@ async function salvarEdicao() {
   const payload = {
     action: 'update',
     rowIndex: c.rowIndex,
+    cliente: nomeClienteEditado.toUpperCase(),
     ultimoContato: ultimoFmt,
     contato: document.getElementById('edit-contato').value || c.contato,
     funcao: document.getElementById('edit-funcao').value || c.funcao,
@@ -1103,14 +1121,27 @@ function renderDashboard() {
   const origemSorted = Object.entries(origemMap).sort((a,b) => b[1]-a[1]);
   const maxOri = Math.max(...origemSorted.map(o => o[1]), 1);
   const oriColors = ['#1A3FAA','#1E7B3E','#C97A00','#8B4FAA','#D63030','#888','#3399CC'];
-  document.getElementById('dash-origem').innerHTML = origemSorted.map(([label, count], i) => `
+  dashOrigemGroups = origemSorted.map(([label, count]) => ({
+    label,
+    count,
+    clients: allClients.filter(c => (c.infoVia || 'Não informado') === label)
+  }));
+  document.getElementById('dash-origem').innerHTML = dashOrigemGroups.map((o, i) => `
     <div style="margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-        <span style="font-weight:500">${label}</span>
-        <span style="font-weight:700;color:${oriColors[i % oriColors.length]}">${count}</span>
+      <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;cursor:pointer" onclick="toggleOrigemClientes(${i})">
+        <span style="font-weight:500">${o.label}</span>
+        <span style="font-weight:700;color:${oriColors[i % oriColors.length]}">${o.count} <span style="font-size:11px;opacity:.6">▼</span></span>
       </div>
-      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden">
-        <div style="width:${Math.round((count/maxOri)*100)}%;height:100%;background:${oriColors[i % oriColors.length]};border-radius:4px;transition:width .5s"></div>
+      <div style="background:var(--bg);border-radius:4px;height:10px;overflow:hidden;cursor:pointer" onclick="toggleOrigemClientes(${i})">
+        <div style="width:${Math.round((o.count/maxOri)*100)}%;height:100%;background:${oriColors[i % oriColors.length]};border-radius:4px;transition:width .5s"></div>
+      </div>
+      <div id="origem-list-${i}" style="display:none;margin-top:8px;background:var(--bg);border-radius:var(--radius-sm);padding:8px;max-height:220px;overflow-y:auto">
+        ${o.clients.map(c => `
+          <div style="font-size:12px;padding:4px 6px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="event.stopPropagation();openClient(${c.rowIndex})">
+            <span style="font-weight:500">${c.cliente}</span>
+            <span style="color:var(--muted);font-size:11px">${c.cidade || ''}</span>
+          </div>`).join('') || '<div style="font-size:12px;color:var(--muted);text-align:center;padding:8px">Nenhum cliente</div>'}
+        ${o.count ? `<div style="text-align:center;margin-top:8px"><button style="background:none;border:none;color:var(--accent);font-size:12px;font-weight:600;cursor:pointer" onclick="event.stopPropagation();verNaListaOrigem(${i})">Ver na lista completa →</button></div>` : ''}
       </div>
     </div>`).join('');
 
@@ -1638,6 +1669,31 @@ function toggleUrgenciaClientes(key) {
 
 function verNaListaUrgencia(key) {
   filterUrgencia = key;
+  filterOrigem = '';
+  currentTab = 'todos';
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  const primeiraTab = document.querySelector('.tab');
+  if (primeiraTab) primeiraTab.classList.add('active');
+  showSection('lista');
+  renderList();
+}
+
+function toggleOrigemClientes(index) {
+  const id = 'origem-list-' + index;
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  // Close all
+  document.querySelectorAll('[id^="origem-list-"]').forEach(e => e.style.display = 'none');
+  // Toggle clicked
+  if (!isOpen) el.style.display = 'block';
+}
+
+function verNaListaOrigem(index) {
+  const grupo = dashOrigemGroups[index];
+  if (!grupo) return;
+  filterOrigem = grupo.label;
+  filterUrgencia = '';
   currentTab = 'todos';
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   const primeiraTab = document.querySelector('.tab');
