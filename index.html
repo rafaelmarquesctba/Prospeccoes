@@ -103,10 +103,10 @@
   .status-pill.sel-PROSPECÇÃO { background: var(--accent-light); border-color: var(--accent); color: var(--accent); }
   .status-pill.sel-CADASTRO { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
   .status-pill.sel-COTAÇÃO { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
-  .status-pill.sel-VENDA\ REALIZADA { background: var(--green-light); border-color: var(--green); color: var(--green); }
+  .status-pill.sel-VENDA_REALIZADA { background: var(--green-light); border-color: var(--green); color: var(--green); }
   .status-pill.sel-DECLINOU { background: var(--gray-light); border-color: #aaa; color: #555; }
-  .status-pill.sel-TIME\ DE\ OBRA { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
-  .status-pill.sel-TESTE\ DE\ PRODUTO { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
+  .status-pill.sel-TIME_DE_OBRA { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+  .status-pill.sel-TESTE_DE_PRODUTO { background: var(--amber-light); border-color: var(--amber); color: var(--amber); }
   .status-pill.sel-INADIMPLENTE { background: var(--red-light); border-color: var(--red); color: var(--red); }
 
   /* BUTTONS */
@@ -252,7 +252,7 @@
         <div class="field"><label>Função</label>
           <select id="n-funcao">
             <option>COMPRAS</option><option>PROPRIETÁRIO</option><option>DIRETOR</option>
-            <option>SECRETÁRIA</option><option>OUTROS.</option>
+            <option>SECRETÁRIA</option><option>ENGENHARIA</option><option>OUTROS.</option>
           </select>
         </div>
       </div>
@@ -268,7 +268,7 @@
           <select id="n-funcao2">
             <option value="">-</option>
             <option>COMPRAS</option><option>PROPRIETÁRIO</option><option>DIRETOR</option>
-            <option>SECRETÁRIA</option><option>OUTROS.</option>
+            <option>SECRETÁRIA</option><option>ENGENHARIA</option><option>OUTROS.</option>
           </select>
         </div>
       </div>
@@ -728,11 +728,11 @@ function openClient(rowIndex) {
         <div class="status-pill ${c.status === 'PROSPECÇÃO' ? 'sel-PROSPECÇÃO' : ''}" onclick="selectEditStatus('PROSPECÇÃO',this)">PROSPECÇÃO</div>
         <div class="status-pill ${c.status === 'CADASTRO' ? 'sel-CADASTRO' : ''}" onclick="selectEditStatus('CADASTRO',this)">CADASTRO</div>
         <div class="status-pill ${c.status === 'COTAÇÃO' ? 'sel-COTAÇÃO' : ''}" onclick="selectEditStatus('COTAÇÃO',this)">COTAÇÃO</div>
-        <div class="status-pill ${c.status === 'VENDA REALIZADA' ? 'sel-VENDA\\ REALIZADA' : ''}" onclick="selectEditStatus('VENDA REALIZADA',this)">VENDA REALIZADA</div>
-        <div class="status-pill ${c.status === 'TIME DE OBRA' ? 'sel-TIME\\ DE\\ OBRA' : ''}" onclick="selectEditStatus('TIME DE OBRA',this)">TIME DE OBRA</div>
+        <div class="status-pill ${c.status === 'VENDA REALIZADA' ? 'sel-VENDA_REALIZADA' : ''}" onclick="selectEditStatus('VENDA REALIZADA',this)">VENDA REALIZADA</div>
+        <div class="status-pill ${c.status === 'TIME DE OBRA' ? 'sel-TIME_DE_OBRA' : ''}" onclick="selectEditStatus('TIME DE OBRA',this)">TIME DE OBRA</div>
         <div class="status-pill ${c.status === 'DECLINOU' ? 'sel-DECLINOU' : ''}" onclick="selectEditStatus('DECLINOU',this)">DECLINOU</div>
         <div class="status-pill ${c.status === 'INADIMPLENTE' ? 'sel-INADIMPLENTE' : ''}" onclick="selectEditStatus('INADIMPLENTE',this)">INADIMPLENTE</div>
-        <div class="status-pill ${c.status === 'TESTE DE PRODUTO' ? 'sel-TESTE\\ DE\\ PRODUTO' : ''}" onclick="selectEditStatus('TESTE DE PRODUTO',this)">TESTE DE PRODUTO</div>
+        <div class="status-pill ${c.status === 'TESTE DE PRODUTO' ? 'sel-TESTE_DE_PRODUTO' : ''}" onclick="selectEditStatus('TESTE DE PRODUTO',this)">TESTE DE PRODUTO</div>
       </div>
     </div>
 
@@ -751,6 +751,7 @@ function openClient(rowIndex) {
           <option value="PROPRIETÁRIO" ${c.funcao === 'PROPRIETÁRIO' ? 'selected' : ''}>PROPRIETÁRIO</option>
           <option value="DIRETOR" ${c.funcao === 'DIRETOR' ? 'selected' : ''}>DIRETOR</option>
           <option value="SECRETÁRIA" ${c.funcao === 'SECRETÁRIA' ? 'selected' : ''}>SECRETÁRIA</option>
+          <option value="ENGENHARIA" ${c.funcao === 'ENGENHARIA' ? 'selected' : ''}>ENGENHARIA</option>
           <option value="OUTROS." ${c.funcao === 'OUTROS.' ? 'selected' : ''}>OUTROS</option>
         </select>
       </div>
@@ -776,6 +777,7 @@ function openClient(rowIndex) {
           <option value="PROPRIETÁRIO" ${c.funcao2 === 'PROPRIETÁRIO' ? 'selected' : ''}>PROPRIETÁRIO</option>
           <option value="DIRETOR" ${c.funcao2 === 'DIRETOR' ? 'selected' : ''}>DIRETOR</option>
           <option value="SECRETÁRIA" ${c.funcao2 === 'SECRETÁRIA' ? 'selected' : ''}>SECRETÁRIA</option>
+          <option value="ENGENHARIA" ${c.funcao2 === 'ENGENHARIA' ? 'selected' : ''}>ENGENHARIA</option>
           <option value="OUTROS." ${c.funcao2 === 'OUTROS.' ? 'selected' : ''}>OUTROS</option>
         </select>
       </div>
@@ -870,13 +872,13 @@ let editStatus = null;
 function selectEditStatus(s, el) {
   editStatus = s;
   document.querySelectorAll('#edit-status-grid .status-pill').forEach(p => p.className = 'status-pill');
-  el.className = 'status-pill sel-' + s;
+  el.className = 'status-pill sel-' + s.replace(/\s+/g, '_');
 }
 
 function selectNewStatus(s, el) {
   newStatus = s;
   document.querySelectorAll('#new-status-grid .status-pill').forEach(p => p.className = 'status-pill');
-  el.className = 'status-pill sel-' + s;
+  el.className = 'status-pill sel-' + s.replace(/\s+/g, '_');
 }
 
 function closeDrawer() {
